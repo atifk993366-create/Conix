@@ -5,25 +5,22 @@ plugins {
 }
 
 android {
-    namespace = "com.jarvis.assistant"
+    namespace = "com.conix.assistant"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.jarvis.assistant"
+        applicationId = "com.conix.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.1"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
-    // Java and Kotlin must use the same JVM target.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 
     buildFeatures { compose = true }
 }
