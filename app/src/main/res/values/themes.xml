@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Conix" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/conix_bg</item>
+        <item name="android:statusBarColor">@color/conix_bg</item>
+        <item name="android:navigationBarColor">@color/conix_bg</item>
+    </style>
+</resources>
