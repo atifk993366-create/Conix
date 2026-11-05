@@ -1,0 +1,1 @@
+Replace app/build.gradle.kts in your repository with the corrected file in this ZIP. Commit to main and rerun the Build JARVIS APK workflow. This fixes Java target 1.8 vs Kotlin target 17 by setting both to JVM 17.
