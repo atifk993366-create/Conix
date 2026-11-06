@@ -62,10 +62,10 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.conix_logo), "CONIX logo", Modifier.size(64.dp))
+            Image(painterResource(R.drawable.conix_logo), "Kori logo", Modifier.size(64.dp))
             Spacer(Modifier.width(12.dp))
             Column {
-                Text("CONIX AI", style = MaterialTheme.typography.headlineSmall)
+                Text("Kori AI", style = MaterialTheme.typography.headlineSmall)
                 Text("Personal Autonomous AI Assistant", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -75,7 +75,7 @@ fun DashboardScreen(
             StatusRow("Microphone permission", if (micOk) "Granted" else "Not granted", micOk)
             StatusRow("Notifications permission", if (notifOk) "Granted" else "Not granted", notifOk)
             StatusRow("Voice security (your voice only)", if (enrolled) "Profile saved - testing mode, no actions authorized yet" else "Not registered - open the Voice ID tab", enrolled)
-            StatusRow("Wake word \"Hey Conix\"", "Not enabled yet - Phase 3", false)
+            StatusRow("Wake word \"Hey Kori\"", "Not enabled yet - Phase 3", false)
             StatusRow("Active language", lang.label, true)
             if (!micOk || !notifOk) {
                 Spacer(Modifier.height(8.dp))
@@ -117,7 +117,7 @@ fun VoiceScreen(
             recog.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang.tag)
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to CONIX")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to Kori")
             })
         } catch (e: Exception) {
             error = "Speech recognition is not available on this phone."
@@ -141,7 +141,7 @@ fun VoiceScreen(
         if (error.isNotEmpty()) Text(error, color = Cx.Warn, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
         Text(
-            "Hands-free \"Hey Conix\" wake word comes in Phase 3. Language support depends on the speech packs installed on your phone.",
+            "Hands-free \"Hey Kori\" wake word comes in Phase 3. Language support depends on the speech packs installed on your phone.",
             color = Cx.Muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center
         )
     }
@@ -172,7 +172,7 @@ fun ChatScreen(messages: List<ChatLine>, onSend: (String) -> Unit) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = input, onValueChange = { input = it },
-                modifier = Modifier.weight(1f), placeholder = { Text("Message CONIX") },
+                modifier = Modifier.weight(1f), placeholder = { Text("Message Kori") },
                 singleLine = true, shape = RoundedCornerShape(24.dp)
             )
             IconButton(onClick = { onSend(input); input = "" }) {
@@ -216,12 +216,12 @@ fun SettingsScreen(
         }
         CxCard {
             Text("Wake phrase", style = MaterialTheme.typography.titleMedium)
-            Text("Hey Conix", color = Cx.Accent)
+            Text("Hey Kori", color = Cx.Accent)
             Text("Detection is not active yet (Phase 3).", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
         }
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("CONIX AI v0.3.0 - Phase 2 build", color = Cx.Muted)
+            Text("Kori AI v0.3.1 - Phase 2 build", color = Cx.Muted)
             Text("Voice ID is in testing mode and does not authorize actions yet.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
         }
     }

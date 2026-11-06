@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -67,7 +68,7 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
     var lang by remember { mutableStateOf(AppLang.English) }
     val messages = remember {
         mutableStateListOf(
-            ChatLine("conix", "Hello! I am CONIX AI. Type or speak a command, e.g. \"open youtube\" or \"search weather in Bhubaneswar\".")
+            ChatLine("conix", "Hello! I am Kori AI. Type or speak a command, e.g. \"open youtube\" or \"search weather in Bhubaneswar\".")
         )
     }
     var micOk by remember { mutableStateOf(hasMic(ctx)) }
@@ -107,10 +108,12 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
         if (splash) {
             SplashScreen()
         } else {
+            val imeUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
             Scaffold(
+                modifier = Modifier.imePadding(),
                 containerColor = Cx.Bg,
                 bottomBar = {
-                    NavigationBar(containerColor = Cx.Card) {
+                    if (!imeUp) NavigationBar(containerColor = Cx.Card) {
                         Tab.values().forEach { t ->
                             NavigationBarItem(
                                 selected = tab == t,
@@ -143,7 +146,7 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
                             onLang = { lang = it },
                             onGrant = { requestPerms() },
                             onTestVoice = {
-                                if (!speak("CONIX AI voice test.", lang))
+                                if (!speak("Kori AI voice test.", lang))
                                     messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone.)"))
                             }
                         )
@@ -164,11 +167,11 @@ fun SplashScreen() {
     Box(Modifier.fillMaxSize().background(Cx.Bg), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
-                painterResource(R.drawable.conix_logo), contentDescription = "CONIX AI logo",
+                painterResource(R.drawable.conix_logo), contentDescription = "Kori AI logo",
                 modifier = Modifier.size(180.dp).alpha(a), contentScale = ContentScale.Fit
             )
             Spacer(Modifier.height(16.dp))
-            Text("CONIX AI", style = MaterialTheme.typography.headlineMedium)
+            Text("Kori AI", style = MaterialTheme.typography.headlineMedium)
             Text("Personal Autonomous AI Assistant", color = Cx.Muted, style = MaterialTheme.typography.bodyMedium)
         }
     }

@@ -16,11 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val PROMPTS = listOf(
-    "Say: \"Hey Conix, what is the weather today?\"",
-    "Say: \"Conix, mera latest message padho.\"",
-    "Say: \"Conix, ମୋତେ ଆଜିର ଖବର କୁହ.\"",
-    "Say: \"Conix, open WhatsApp and play some music.\"",
-    "Say: \"Conix, set an alarm for seven in the morning.\""
+    "Say: \"Hey Kori, what is the weather today?\"",
+    "Say: \"Kori, mera latest message padho.\"",
+    "Say: \"Kori, ମୋତେ ଆଜିର ଖବର କୁହ.\"",
+    "Say: \"Kori, open WhatsApp and play some music.\"",
+    "Say: \"Kori, set an alarm for seven in the morning.\""
 )
 
 private fun fmt(x: Float) = String.format("%.2f", x)
