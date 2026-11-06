@@ -221,7 +221,7 @@ fun SettingsScreen(
         }
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("CONIX AI v0.2.0 - Phase 1 build", color = Cx.Muted)
+            Text("CONIX AI v0.2.1 - Phase 1 build", color = Cx.Muted)
             Text("No voice-identity check yet; do not use for private actions.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
         }
     }

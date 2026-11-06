@@ -11,6 +11,15 @@ class CommandRouter(private val ctx: Context) {
     fun handle(raw: String): String {
         val q = raw.trim().lowercase(Locale.ROOT)
         return when {
+            q.startsWith("play ") || (q.contains("youtube") && q.contains("play ")) -> {
+                val term = Regex("play\\s+(?:a |an |the |some )?(.+)", RegexOption.IGNORE_CASE)
+                    .find(raw)?.groupValues?.get(1)?.replace(Regex("\\s+on\\s+youtube$", RegexOption.IGNORE_CASE), "")?.trim().orEmpty()
+                if (term.isEmpty()) { openUrl("https://www.youtube.com"); "Opening YouTube." }
+                else {
+                    openUrl("https://www.youtube.com/results?search_query=" + java.net.URLEncoder.encode(term, "UTF-8"))
+                    "Searching YouTube for \"$term\". Tap a result to play it."
+                }
+            }
             q.contains("open youtube") || q.contains("यूट्यूब खोल") || q.contains("ୟୁଟ୍ୟୁବ୍ ଖୋଲ") -> {
                 openUrl("https://www.youtube.com"); "Opening YouTube."
             }
