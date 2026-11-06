@@ -55,7 +55,7 @@ fun LangChips(lang: AppLang, onLang: (AppLang) -> Unit) {
 @Composable
 fun DashboardScreen(
     micOk: Boolean, notifOk: Boolean, lang: AppLang,
-    onGrant: () -> Unit, onQuick: (String) -> Unit
+    onGrant: () -> Unit, onQuick: (String) -> Unit, enrolled: Boolean = false
 ) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -74,7 +74,7 @@ fun DashboardScreen(
             Spacer(Modifier.height(6.dp))
             StatusRow("Microphone permission", if (micOk) "Granted" else "Not granted", micOk)
             StatusRow("Notifications permission", if (notifOk) "Granted" else "Not granted", notifOk)
-            StatusRow("Voice security (your voice only)", "Not enabled yet - Phase 2", false)
+            StatusRow("Voice security (your voice only)", if (enrolled) "Profile saved - testing mode, no actions authorized yet" else "Not registered - open the Voice ID tab", enrolled)
             StatusRow("Wake word \"Hey Conix\"", "Not enabled yet - Phase 3", false)
             StatusRow("Active language", lang.label, true)
             if (!micOk || !notifOk) {
@@ -221,8 +221,8 @@ fun SettingsScreen(
         }
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("CONIX AI v0.2.1 - Phase 1 build", color = Cx.Muted)
-            Text("No voice-identity check yet; do not use for private actions.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+            Text("CONIX AI v0.3.0 - Phase 2 build", color = Cx.Muted)
+            Text("Voice ID is in testing mode and does not authorize actions yet.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -28,6 +29,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.conix.assistant.voice.SpeakerEmbedder
+import com.conix.assistant.voice.VoiceVault
 import kotlinx.coroutines.delay
 
 object Cx {
@@ -43,6 +46,7 @@ enum class Tab(val label: String, val icon: ImageVector) {
     Home("Home", Icons.Filled.Dashboard),
     Voice("Voice", Icons.Filled.Mic),
     Chat("Chat", Icons.Filled.ChatBubble),
+    Security("Voice ID", Icons.Filled.Lock),
     Settings("Settings", Icons.Filled.Settings)
 }
 
@@ -68,6 +72,9 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
     }
     var micOk by remember { mutableStateOf(hasMic(ctx)) }
     var notifOk by remember { mutableStateOf(hasNotif(ctx)) }
+    val vault = remember { VoiceVault(ctx) }
+    val embedder = remember { SpeakerEmbedder(ctx.applicationContext) }
+    var enrolled by remember { mutableStateOf(vault.isEnrolled()) }
 
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         micOk = hasMic(ctx); notifOk = hasNotif(ctx)
@@ -89,7 +96,7 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
     }
 
     LaunchedEffect(Unit) { delay(1600); splash = false }
-    LaunchedEffect(tab) { micOk = hasMic(ctx); notifOk = hasNotif(ctx) }
+    LaunchedEffect(tab) { micOk = hasMic(ctx); notifOk = hasNotif(ctx); enrolled = vault.isEnrolled() }
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -120,7 +127,8 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
                         Tab.Home -> DashboardScreen(
                             micOk, notifOk, lang,
                             onGrant = { requestPerms() },
-                            onQuick = { send(it); tab = Tab.Chat }
+                            onQuick = { send(it); tab = Tab.Chat },
+                            enrolled = enrolled
                         )
                         Tab.Voice -> VoiceScreen(
                             lang, micOk,
@@ -129,6 +137,7 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
                             onHeard = { send(it) }
                         )
                         Tab.Chat -> ChatScreen(messages, onSend = { send(it) })
+                        Tab.Security -> SecurityScreen(vault, embedder, micOk, onRequestPerms = { requestPerms() })
                         Tab.Settings -> SettingsScreen(
                             lang, micOk, notifOk,
                             onLang = { lang = it },
