@@ -12,8 +12,8 @@ android {
         applicationId = "com.conix.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 6
+        versionName = "0.4.0"
     }
 
     compileOptions {
@@ -34,5 +34,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
+    implementation("androidx.biometric:biometric:1.1.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
