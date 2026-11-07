@@ -65,7 +65,7 @@ private fun hasNotif(ctx: Context) =
     Build.VERSION.SDK_INT < 33 ||
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-private fun Context.findActivity(): FragmentActivity? {
+internal fun Context.findActivity(): FragmentActivity? {
     var c: Context = this
     while (c is ContextWrapper) {
         if (c is FragmentActivity) return c
@@ -75,7 +75,7 @@ private fun Context.findActivity(): FragmentActivity? {
 }
 
 @Composable
-fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
+fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (String, AppLang) -> Boolean) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var splash by remember { mutableStateOf(true) }
@@ -83,7 +83,6 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
     var lang by remember { mutableStateOf(AppLang.values().firstOrNull { it.tag == core.prefs.langTag } ?: AppLang.English) }
     val messages = KoriBus.messages
     var thinking by remember { mutableStateOf(false) }
-    var research by remember { mutableStateOf(false) }
     var micOk by remember { mutableStateOf(hasMic(ctx)) }
     var notifOk by remember { mutableStateOf(hasNotif(ctx)) }
     var brainReady by remember { mutableStateOf(core.brain.hasKey()) }
@@ -116,7 +115,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
         messages.add(ChatLine("you", t))
         thinking = true
         scope.launch {
-            val reply = try { core.handle(t, research, typed) } catch (e: Exception) { "Error: ${e.message}" }
+            val reply = try { core.handle(t, typed) } catch (e: Exception) { "Error: ${e.message}" }
             messages.add(ChatLine("conix", reply))
             if (!speak(reply.substringBefore("\n\nSources:").take(400), lang)) {
                 messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone. Showing text only.)"))
@@ -131,6 +130,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
         enrolled = vault.isEnrolled(); brainReady = core.brain.hasKey()
     }
     LaunchedEffect(lang) { core.prefs.langTag = lang.tag }
+    LaunchedEffect(Unit) { KoriBus.awayUntil = core.prefs.awayUntil }
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -140,6 +140,12 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
     ) {
         if (splash) {
             SplashScreen()
+        } else if (KoriBus.cameraRequest != null) {
+            CameraScreen(
+                core, KoriBus.cameraRequest ?: "",
+                onClose = { KoriBus.cameraRequest = null },
+                speak = { t -> speak(t, lang) }
+            )
         } else {
             val imeUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
             Scaffold(
@@ -169,16 +175,13 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
                             wakeOn = KoriBus.wakeActive
                         )
                         Tab.Voice -> VoiceScreen(
-                            lang, micOk,
+                            core, lang, micOk,
                             onLang = { lang = it },
                             onRequestPerms = { requestPerms() },
-                            onHeard = { send(it, false); tab = Tab.Chat }
+                            onHeard = { send(it, false); tab = Tab.Chat },
+                            speakCall = speakCall
                         )
-                        Tab.Chat -> ChatScreen(
-                            messages, thinking, research,
-                            onResearch = { research = it },
-                            onSend = { send(it) }
-                        )
+                        Tab.Chat -> ChatScreen(messages, thinking, onSend = { send(it) })
                         Tab.Security -> SecurityScreen(vault, embedder, micOk, onRequestPerms = { requestPerms() })
                         Tab.Settings -> SettingsScreen(
                             core, lang, micOk, notifOk,

@@ -47,7 +47,7 @@ class CommandRouter(private val ctx: Context) {
             q.contains("hello") || q.startsWith("hi") || q.contains("नमस्ते") || q.contains("ନମସ୍କାର") ->
                 "Hello! I'm Kori. Voice identity is still in testing mode, so I won't do private or sensitive actions yet."
             else ->
-                "I heard: \"$raw\". This build supports basic commands only (open youtube / google / whatsapp / settings, search ..., play ...). The AI brain arrives in Phase 5."
+                "I heard: \"$raw\". I can only do basic commands right now (open apps, call, play, search). Add an AI key in Settings, or check your internet, for full answers."
         }
     }
 

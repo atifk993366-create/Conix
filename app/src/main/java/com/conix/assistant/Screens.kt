@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
+import android.os.PowerManager
 import android.provider.Settings
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,7 +36,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.conix.assistant.access.KoriAccessibility
+import com.conix.assistant.core.CallNotes
 import com.conix.assistant.core.KoriCore
+import com.conix.assistant.live.Interpreter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.conix.assistant.notif.KoriNotificationListener
 import com.conix.assistant.wake.WakeService
 
@@ -111,9 +117,12 @@ fun DashboardScreen(
 
 @Composable
 fun VoiceScreen(
-    lang: AppLang, micOk: Boolean,
-    onLang: (AppLang) -> Unit, onRequestPerms: () -> Unit, onHeard: (String) -> Unit
+    core: KoriCore, lang: AppLang, micOk: Boolean,
+    onLang: (AppLang) -> Unit, onRequestPerms: () -> Unit, onHeard: (String) -> Unit,
+    speakCall: (String, AppLang) -> Boolean
 ) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     var heard by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
     val recog = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -133,45 +142,152 @@ fun VoiceScreen(
             error = "Speech recognition is not available on this phone."
         }
     }
+
+    val notesTick = KoriBus.notesTick
+    val awayUntil = KoriBus.awayUntil
+    val awayOn = awayUntil > System.currentTimeMillis()
+    var awayMin by remember { mutableIntStateOf(10) }
+    var owner by remember { mutableStateOf(core.prefs.ownerName) }
+    val notes = remember(notesTick) { CallNotes.all(core.secrets) }
+
+    val interpreter = remember { Interpreter(ctx.applicationContext, core) }
+    DisposableEffect(Unit) { onDispose { interpreter.stop() } }
+    var interpreting by remember { mutableStateOf(false) }
+    var src by remember { mutableStateOf(AppLang.Hindi) }
+    var dst by remember { mutableStateOf(AppLang.English) }
+    val lines = remember { mutableStateListOf<Pair<String, String>>() }
+    var typed by remember { mutableStateOf("") }
+    var translateOut by remember { mutableStateOf(false) }
+    var outLang by remember { mutableStateOf(AppLang.English) }
+    var callInfo by remember { mutableStateOf("") }
+
     Column(
-        Modifier.fillMaxSize().padding(24.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         LangChips(lang, onLang)
-        Spacer(Modifier.height(40.dp))
         Box(
-            Modifier.size(150.dp).background(Cx.Accent, CircleShape).clickable { listen() },
+            Modifier.size(130.dp).background(Cx.Accent, CircleShape).clickable { listen() },
             contentAlignment = Alignment.Center
-        ) { Icon(Icons.Filled.Mic, "Speak", Modifier.size(64.dp), tint = Color(0xFF00212E)) }
-        Spacer(Modifier.height(20.dp))
+        ) { Icon(Icons.Filled.Mic, "Speak", Modifier.size(56.dp), tint = Color(0xFF00212E)) }
         Text("Tap to speak", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
         if (heard.isNotEmpty()) Text("Heard: $heard", color = Cx.Muted, textAlign = TextAlign.Center)
         if (error.isNotEmpty()) Text(error, color = Cx.Warn, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(24.dp))
-        Text(
-            "For hands-free \"Hey Kori\", start the wake-word listener in Settings. Language support depends on the speech packs installed on your phone.",
-            color = Cx.Muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center
-        )
+
+        CxCard {
+            Text("Away mode", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Kori answers incoming calls on speaker, tells the caller it is an AI assistant and that the call may be transcribed, asks their name and reason, then hangs up and leaves you a note. Needs the Hey Kori listener (it starts automatically).",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = owner, onValueChange = { owner = it; core.prefs.ownerName = it },
+                label = { Text("Your name (what Kori tells callers)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(5, 10, 30).forEach { m ->
+                    FilterChip(selected = awayMin == m, onClick = { awayMin = m }, label = { Text("$m min") })
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    if (!micOk) {
+                        onRequestPerms()
+                    } else {
+                        val until = System.currentTimeMillis() + awayMin * 60_000L
+                        core.prefs.awayUntil = until
+                        KoriBus.awayUntil = until
+                        try { ContextCompat.startForegroundService(ctx, Intent(ctx, WakeService::class.java)) } catch (_: Exception) { }
+                    }
+                }) { Text("Start Away mode") }
+                OutlinedButton(onClick = { core.prefs.awayUntil = 0L; KoriBus.awayUntil = 0L }) { Text("I'm back") }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (awayOn) "Away until " + SimpleDateFormat("HH:mm", Locale.ENGLISH).format(Date(awayUntil)) else "Away mode is off.",
+                color = if (awayOn) Cx.Good else Cx.Muted
+            )
+            Text(
+                "Android does not let apps record or speak into the call audio, so Kori talks through the speaker and listens through the microphone. On some phones the microphone is muted during calls; then Kori texts the caller instead. Notes are transcripts, not recordings.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            if (notes.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text("While you were away", style = MaterialTheme.typography.titleSmall)
+                notes.take(8).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                OutlinedButton(onClick = { CallNotes.clear(core.secrets); KoriBus.notesTick++ }) { Text("Clear notes") }
+            }
+        }
+
+        CxCard {
+            Text("Call helper", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Put the call on speaker. Live translation listens through the microphone (stop the Hey Kori listener first) and shows what it hears, translated. Type to speak lets Kori say your text into the call.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("They speak:", color = Cx.Muted)
+            LangChips(src) { src = it }
+            Spacer(Modifier.height(4.dp))
+            Text("Translate to:", color = Cx.Muted)
+            LangChips(dst) { dst = it }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {
+                if (interpreting) {
+                    interpreter.stop(); interpreting = false
+                } else if (!micOk) {
+                    onRequestPerms()
+                } else {
+                    lines.clear()
+                    interpreter.start(src, dst) { o, t -> lines.add(0, o to t) }
+                    interpreting = true
+                }
+            }) { Text(if (interpreting) "Stop live translation" else "Start live translation") }
+            lines.take(10).forEach { line ->
+                Spacer(Modifier.height(6.dp))
+                Text(line.first, color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+                Text(line.second)
+            }
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = typed, onValueChange = { typed = it },
+                label = { Text("Type what Kori should say") }, modifier = Modifier.fillMaxWidth()
+            )
+            SwitchRow("Translate before speaking", translateOut) { translateOut = it }
+            if (translateOut) LangChips(outLang) { outLang = it }
+            Spacer(Modifier.height(6.dp))
+            Button(onClick = {
+                val text = typed.trim()
+                if (text.isNotEmpty()) {
+                    scope.launch {
+                        val out = if (translateOut) core.translate(text, Interpreter.englishName(outLang)) else text
+                        val ok = speakCall(out, if (translateOut) outLang else lang)
+                        callInfo = if (ok) "Said: $out" else "Voice output for that language is not installed on this phone."
+                    }
+                }
+            }) { Text("Speak into the call") }
+            if (callInfo.isNotEmpty()) Text(callInfo, color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 
 @Composable
-fun ChatScreen(
-    messages: List<ChatLine>, thinking: Boolean, research: Boolean,
-    onResearch: (Boolean) -> Unit, onSend: (String) -> Unit
-) {
+fun ChatScreen(messages: List<ChatLine>, thinking: Boolean, onSend: (String) -> Unit) {
     var input by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     LaunchedEffect(messages.size) { if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1) }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            FilterChip(selected = research, onClick = { onResearch(!research) }, label = { Text("Web research") })
-            if (thinking) {
-                Spacer(Modifier.width(12.dp))
-                Text("Kori is thinking...", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
-            }
+        if (thinking) {
+            Text(
+                "Kori is thinking...", color = Cx.Muted, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+            )
         }
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp),
@@ -192,7 +308,7 @@ fun ChatScreen(
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = input, onValueChange = { input = it },
-                modifier = Modifier.weight(1f), placeholder = { Text("Message Kori") },
+                modifier = Modifier.weight(1f), placeholder = { Text("Ask or command Kori") },
                 singleLine = true, shape = RoundedCornerShape(24.dp)
             )
             IconButton(onClick = { onSend(input); input = "" }) {
@@ -272,6 +388,8 @@ fun SettingsScreen(
     var autoSend by remember { mutableStateOf(core.prefs.autoSendWa) }
     var blocked by remember { mutableStateOf(core.prefs.blockedApps) }
     var showPicker by remember { mutableStateOf(false) }
+    var lockMode by remember { mutableStateOf(core.prefs.lockScreenMode) }
+    var awaySms by remember { mutableStateOf(core.prefs.awaySms) }
 
     fun open(i: Intent) { try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { } }
 
@@ -389,6 +507,24 @@ fun SettingsScreen(
         }
 
         CxCard {
+            Text("Background and lock screen", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            SwitchRow("Allow Kori on the lock screen (calls and questions only)", lockMode) { lockMode = it; core.prefs.lockScreenMode = it }
+            SwitchRow("In Away mode, text callers I couldn't hear", awaySms) { awaySms = it; core.prefs.awaySms = it }
+            val ignoring = ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
+            StatusRow("Unrestricted battery use", if (ignoring) "Allowed" else "Restricted - Android may stop listening", ignoring)
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = {
+                open(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + ctx.packageName)))
+            }) { Text("Allow background use") }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Realme/Oppo: also open App settings > Battery usage > Allow background activity, and turn on Auto-launch. Developer options are not needed. While the phone is locked Kori only makes calls and answers questions; with no lock-screen use enabled it does nothing until you unlock.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        CxCard {
             Text("Excluded apps", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
@@ -454,7 +590,7 @@ fun SettingsScreen(
 
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("Kori AI v0.5.0", color = Cx.Muted)
+            Text("Kori AI v0.6.0", color = Cx.Muted)
             Text(
                 "Voice ID is experimental and never authorizes actions.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall

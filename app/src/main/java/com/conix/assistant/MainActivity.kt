@@ -1,5 +1,7 @@
 package com.conix.assistant
 
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import androidx.activity.compose.setContent
@@ -21,7 +23,13 @@ class MainActivity : FragmentActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
         val core = KoriCore(applicationContext)
-        setContent { ConixApp(core = core, speak = { text, lang -> speak(text, lang) }) }
+        setContent {
+            ConixApp(
+                core = core,
+                speak = { text, lang -> speak(text, lang, false) },
+                speakCall = { text, lang -> speak(text, lang, true) }
+            )
+        }
     }
 
     override fun onStart() { super.onStart(); KoriBus.appInForeground = true }
@@ -30,12 +38,21 @@ class MainActivity : FragmentActivity(), TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) { ttsReady = status == TextToSpeech.SUCCESS }
 
-    /** Returns false if voice output for this language is unavailable. */
-    private fun speak(text: String, lang: AppLang): Boolean {
+    /** Returns false if voice output for this language is unavailable. [call] = play into an ongoing call (speakerphone). */
+    private fun speak(text: String, lang: AppLang, call: Boolean): Boolean {
         val engine = tts ?: return false
         if (!ttsReady) return false
         val r = engine.setLanguage(lang.locale)
         if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) return false
+        engine.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(if (call) AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_ASSISTANT)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+        )
+        if (call) {
+            try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = true } catch (_: Exception) { }
+        }
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "kori_reply")
         return true
     }
