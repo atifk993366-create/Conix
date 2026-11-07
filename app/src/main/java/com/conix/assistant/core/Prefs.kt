@@ -1,0 +1,80 @@
+package com.conix.assistant.core
+
+import android.content.Context
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import java.io.File
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+
+class Prefs(ctx: Context) {
+    private val p = ctx.getSharedPreferences("kori_prefs", Context.MODE_PRIVATE)
+
+    var provider: String
+        get() = p.getString("provider", "gemini") ?: "gemini"
+        set(v) { p.edit().putString("provider", v).apply() }
+
+    var model: String
+        get() = p.getString("model_$provider", null) ?: defaultModel(provider)
+        set(v) { p.edit().putString("model_$provider", v.trim()).apply() }
+
+    var wakeMinutes: Int
+        get() = p.getInt("wake_minutes", 30)
+        set(v) { p.edit().putInt("wake_minutes", v).apply() }
+
+    var langTag: String
+        get() = p.getString("lang_tag", "en-IN") ?: "en-IN"
+        set(v) { p.edit().putString("lang_tag", v).apply() }
+
+    companion object {
+        fun defaultModel(provider: String) = if (provider == "claude") "claude-haiku-5-5" else "gemini-3.5-flash"
+    }
+}
+
+/** Stores secrets (API keys, memory) encrypted with an Android Keystore AES-GCM key. */
+class SecretStore(ctx: Context) {
+    private val dir = File(ctx.filesDir, "secrets").apply { mkdirs() }
+
+    fun put(name: String, value: String) {
+        File(dir, name).writeBytes(encrypt(value.toByteArray(Charsets.UTF_8)))
+    }
+
+    fun get(name: String): String? {
+        val f = File(dir, name)
+        if (!f.exists()) return null
+        return try { String(decrypt(f.readBytes()), Charsets.UTF_8) } catch (e: Exception) { null }
+    }
+
+    fun remove(name: String) { File(dir, name).delete() }
+
+    private fun key(): SecretKey {
+        val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (ks.getKey(ALIAS, null) as? SecretKey)?.let { return it }
+        val kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        kg.init(
+            KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build()
+        )
+        return kg.generateKey()
+    }
+
+    private fun encrypt(data: ByteArray): ByteArray {
+        val c = Cipher.getInstance("AES/GCM/NoPadding")
+        c.init(Cipher.ENCRYPT_MODE, key())
+        return c.iv + c.doFinal(data)
+    }
+
+    private fun decrypt(b: ByteArray): ByteArray {
+        val c = Cipher.getInstance("AES/GCM/NoPadding")
+        c.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, b.copyOfRange(0, 12)))
+        return c.doFinal(b, 12, b.size - 12)
+    }
+
+    companion object { private const val ALIAS = "kori_secret_key" }
+}
