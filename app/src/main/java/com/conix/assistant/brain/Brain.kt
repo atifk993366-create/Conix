@@ -79,8 +79,12 @@ Actions:
 {"type":"read_notifications"}
 {"type":"read_sms"}
 {"type":"shop","query":"...","site":"amazon|flipkart|meesho|all"}
+{"type":"wa_reply","to":"sender name or empty for the latest WhatsApp sender","text":"..."}
+{"type":"read_whatsapp"}
+{"type":"answer_call"}
+{"type":"reject_call"}
 {"type":"remember","text":"a fact the user asked you to remember"}
-Rules: never invent phone numbers or addresses. The app asks the user to confirm and unlock the phone for call, sms, whatsapp, read_sms and read_notifications, so just emit the action. Do not claim something is done; say you are doing it. Use "action": null for normal conversation.
+Rules: never invent phone numbers or addresses. The app handles confirmation and safety itself for call, sms, whatsapp, wa_reply and the read_* actions, so just emit the action. Do not claim something is done; say you are doing it. Use "action": null for normal conversation.
 """.trimIndent()
     }
 
