@@ -38,7 +38,9 @@ class SpeakerEmbedder(private val ctx: Context) {
         if (!ensureLoaded()) return null
         val s = session ?: return null
         val e = env ?: return null
-        val feats = Fbank.compute(pcm)
+        val speech = Recorder.trimSilence(pcm)
+        if (speech.size < Recorder.SR * 3 / 2) { error = "Not enough speech detected"; return null }
+        val feats = Fbank.compute(speech)
         if (feats.size < 50) { error = "Audio too short"; return null }
         return try {
             if (s.inputNames.size != 1) { error = "Unexpected model inputs: ${s.inputNames}"; return null }

@@ -17,6 +17,9 @@ object Fbank {
     private const val PREEMPH = 0.97
     private const val EPS = 1.1920929e-7
 
+    /** Experimental: feed samples in [-1, 1] instead of the int16 range. */
+    @Volatile var unitScale = false
+
     private val window = DoubleArray(FRAME_LEN) { (0.5 - 0.5 * cos(2.0 * PI * it / (FRAME_LEN - 1))).pow(0.85) }
 
     private fun mel(f: Double) = 1127.0 * ln(1.0 + f / 700.0)
@@ -53,7 +56,8 @@ object Fbank {
         for (f in 0 until nFrames) {
             val off = f * SHIFT
             var mean = 0.0
-            for (i in 0 until FRAME_LEN) { x[i] = pcm[off + i].toDouble(); mean += x[i] }
+            val sc = if (unitScale) 1.0 / 32768.0 else 1.0
+            for (i in 0 until FRAME_LEN) { x[i] = pcm[off + i].toDouble() * sc; mean += x[i] }
             mean /= FRAME_LEN
             for (i in 0 until FRAME_LEN) x[i] -= mean
             for (i in FRAME_LEN - 1 downTo 1) x[i] -= PREEMPH * x[i - 1]

@@ -24,6 +24,10 @@ class VoiceVault(ctx: Context) {
         get() = prefs.getFloat("threshold", 0.5f)
         set(v) { prefs.edit().putFloat("threshold", v).apply() }
 
+    var featureB: Boolean
+        get() = prefs.getBoolean("feat_b", false)
+        set(v) { prefs.edit().putBoolean("feat_b", v).apply() }
+
     fun sampleCount(): Int {
         var n = 0
         while (n < ENROLL_SAMPLES && File(dir, "sample_$n.enc").exists()) n++

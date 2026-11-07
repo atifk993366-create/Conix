@@ -40,6 +40,27 @@ object Recorder {
         out.copyOf(n)
     }
 
+    /** Cuts leading/trailing silence so the embedding is based on speech only. */
+    fun trimSilence(pcm: ShortArray): ShortArray {
+        val frame = SR / 50
+        val n = pcm.size / frame
+        if (n < 5) return pcm
+        val rms = DoubleArray(n) { f ->
+            var s = 0.0
+            for (i in 0 until frame) { val v = pcm[f * frame + i].toDouble(); s += v * v }
+            sqrt(s / frame)
+        }
+        val peak = rms.maxOrNull() ?: 0.0
+        val thr = maxOf(150.0, peak * 0.08)
+        var first = -1
+        var last = -1
+        for (f in 0 until n) if (rms[f] >= thr) { if (first < 0) first = f; last = f }
+        if (first < 0) return ShortArray(0)
+        val a = maxOf(0, first - 5) * frame
+        val b = minOf(n, last + 6) * frame
+        return pcm.copyOfRange(a, b)
+    }
+
     /** Returns a problem description, or null if the recording is usable. */
     fun checkQuality(pcm: ShortArray, minSeconds: Int = 4): String? {
         if (pcm.size < SR * minSeconds) return "Recording was too short. Please try again."
