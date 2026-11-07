@@ -2,6 +2,7 @@ package com.conix.assistant
 
 import android.Manifest
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,9 +31,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import com.conix.assistant.core.Gate
+import com.conix.assistant.core.KoriCore
 import com.conix.assistant.voice.SpeakerEmbedder
 import com.conix.assistant.voice.VoiceVault
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 object Cx {
     val Bg = Color(0xFF0A1220)
@@ -60,19 +65,28 @@ private fun hasNotif(ctx: Context) =
     Build.VERSION.SDK_INT < 33 ||
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
+private fun Context.findActivity(): FragmentActivity? {
+    var c: Context = this
+    while (c is ContextWrapper) {
+        if (c is FragmentActivity) return c
+        c = c.baseContext
+    }
+    return null
+}
+
 @Composable
-fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
+fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     var splash by remember { mutableStateOf(true) }
     var tab by remember { mutableStateOf(Tab.Home) }
-    var lang by remember { mutableStateOf(AppLang.English) }
-    val messages = remember {
-        mutableStateListOf(
-            ChatLine("conix", "Hello! I am Kori AI. Type or speak a command, e.g. \"open youtube\" or \"search weather in Bhubaneswar\".")
-        )
-    }
+    var lang by remember { mutableStateOf(AppLang.values().firstOrNull { it.tag == core.prefs.langTag } ?: AppLang.English) }
+    val messages = KoriBus.messages
+    var thinking by remember { mutableStateOf(false) }
+    var research by remember { mutableStateOf(false) }
     var micOk by remember { mutableStateOf(hasMic(ctx)) }
     var notifOk by remember { mutableStateOf(hasNotif(ctx)) }
+    var brainReady by remember { mutableStateOf(core.brain.hasKey()) }
     val vault = remember { VoiceVault(ctx) }
     val embedder = remember { SpeakerEmbedder(ctx.applicationContext) }
     var enrolled by remember { mutableStateOf(vault.isEnrolled()) }
@@ -80,24 +94,41 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         micOk = hasMic(ctx); notifOk = hasNotif(ctx)
     }
+    val commLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
     fun requestPerms() {
         val list = mutableListOf(Manifest.permission.RECORD_AUDIO)
         if (Build.VERSION.SDK_INT >= 33) list.add(Manifest.permission.POST_NOTIFICATIONS)
         permLauncher.launch(list.toTypedArray())
     }
+    fun requestComm() {
+        commLauncher.launch(
+            arrayOf(
+                Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE,
+                Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS
+            )
+        )
+    }
     fun send(text: String) {
         val t = text.trim()
-        if (t.isEmpty()) return
+        if (t.isEmpty() || thinking) return
         messages.add(ChatLine("you", t))
-        val reply = router.handle(t)
-        messages.add(ChatLine("conix", reply))
-        if (!speak(reply, lang)) {
-            messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone. Showing text only.)"))
+        thinking = true
+        scope.launch {
+            val reply = try { core.handle(t, research) } catch (e: Exception) { "Error: ${e.message}" }
+            messages.add(ChatLine("conix", reply))
+            if (!speak(reply.substringBefore("\n\nSources:").take(400), lang)) {
+                messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone. Showing text only.)"))
+            }
+            thinking = false
         }
     }
 
     LaunchedEffect(Unit) { delay(1600); splash = false }
-    LaunchedEffect(tab) { micOk = hasMic(ctx); notifOk = hasNotif(ctx); enrolled = vault.isEnrolled() }
+    LaunchedEffect(tab) {
+        micOk = hasMic(ctx); notifOk = hasNotif(ctx)
+        enrolled = vault.isEnrolled(); brainReady = core.brain.hasKey()
+    }
+    LaunchedEffect(lang) { core.prefs.langTag = lang.tag }
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -131,28 +162,65 @@ fun ConixApp(router: CommandRouter, speak: (String, AppLang) -> Boolean) {
                             micOk, notifOk, lang,
                             onGrant = { requestPerms() },
                             onQuick = { send(it); tab = Tab.Chat },
-                            enrolled = enrolled
+                            enrolled = enrolled,
+                            brainReady = brainReady,
+                            wakeOn = KoriBus.wakeActive
                         )
                         Tab.Voice -> VoiceScreen(
                             lang, micOk,
                             onLang = { lang = it },
                             onRequestPerms = { requestPerms() },
-                            onHeard = { send(it) }
+                            onHeard = { send(it); tab = Tab.Chat }
                         )
-                        Tab.Chat -> ChatScreen(messages, onSend = { send(it) })
+                        Tab.Chat -> ChatScreen(
+                            messages, thinking, research,
+                            onResearch = { research = it },
+                            onSend = { send(it) }
+                        )
                         Tab.Security -> SecurityScreen(vault, embedder, micOk, onRequestPerms = { requestPerms() })
                         Tab.Settings -> SettingsScreen(
-                            lang, micOk, notifOk,
+                            core, lang, micOk, notifOk,
                             onLang = { lang = it },
                             onGrant = { requestPerms() },
+                            onGrantComm = { requestComm() },
                             onTestVoice = {
-                                if (!speak("Kori AI voice test.", lang))
+                                if (!speak("Kori voice test.", lang))
                                     messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone.)"))
                             }
                         )
                     }
                 }
             }
+        }
+
+        val pending = KoriBus.pending
+        if (pending != null) {
+            AlertDialog(
+                onDismissRequest = { KoriBus.pending = null },
+                title = { Text(pending.title) },
+                text = { Text(pending.detail + "\n\nYou will be asked to unlock your phone.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        KoriBus.pending = null
+                        val act = ctx.findActivity()
+                        if (act == null) {
+                            messages.add(ChatLine("conix", "Could not ask for phone unlock."))
+                        } else {
+                            Gate.authenticate(act, pending.title) { ok ->
+                                messages.add(
+                                    ChatLine("conix", if (ok) pending.run() else "Cancelled - phone unlock was not completed (set a screen lock if you haven't).")
+                                )
+                            }
+                        }
+                    }) { Text("Confirm") }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        KoriBus.pending = null
+                        messages.add(ChatLine("conix", "Cancelled."))
+                    }) { Text("Cancel") }
+                }
+            )
         }
     }
 }

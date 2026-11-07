@@ -2,8 +2,9 @@ package com.conix.assistant
 
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.fragment.app.FragmentActivity
+import com.conix.assistant.core.KoriCore
 import java.util.Locale
 
 enum class AppLang(val label: String, val tag: String, val locale: Locale) {
@@ -12,16 +13,19 @@ enum class AppLang(val label: String, val tag: String, val locale: Locale) {
     Odia("ଓଡ଼ିଆ", "or-IN", Locale("or", "IN"))
 }
 
-class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
+class MainActivity : FragmentActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
-        val router = CommandRouter(applicationContext)
-        setContent { ConixApp(router = router, speak = { text, lang -> speak(text, lang) }) }
+        val core = KoriCore(applicationContext)
+        setContent { ConixApp(core = core, speak = { text, lang -> speak(text, lang) }) }
     }
+
+    override fun onStart() { super.onStart(); KoriBus.appInForeground = true }
+    override fun onStop() { KoriBus.appInForeground = false; super.onStop() }
 
     override fun onInit(status: Int) { ttsReady = status == TextToSpeech.SUCCESS }
 
@@ -31,7 +35,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         if (!ttsReady) return false
         val r = engine.setLanguage(lang.locale)
         if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) return false
-        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "conix_reply")
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "kori_reply")
         return true
     }
 

@@ -90,10 +90,5 @@ class CommandRouter(private val ctx: Context) {
 
     private fun openUrl(url: String) = launch(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
-    private fun launch(i: Intent) {
-        try {
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            ctx.startActivity(i)
-        } catch (_: Exception) { }
-    }
+    private fun launch(i: Intent) = com.conix.assistant.core.Notifs.launch(ctx, i)
 }

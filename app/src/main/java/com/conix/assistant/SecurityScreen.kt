@@ -5,9 +5,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.conix.assistant.voice.ENROLL_SAMPLES
+import com.conix.assistant.voice.Fbank
 import com.conix.assistant.voice.Recorder
 import com.conix.assistant.voice.SpeakerEmbedder
 import com.conix.assistant.voice.VoiceVault
@@ -48,11 +50,14 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
     var enrolled by remember { mutableStateOf(vault.isEnrolled()) }
     var busy by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
-    var score by remember { mutableStateOf<Float?>(null) }
     var threshold by remember { mutableFloatStateOf(vault.threshold) }
+    var modeB by remember { mutableStateOf(vault.featureB) }
     var modelMsg by remember { mutableStateOf("Checking speaker model...") }
+    val meScores = remember { mutableStateListOf<Float>() }
+    val otherScores = remember { mutableStateListOf<Float>() }
 
     LaunchedEffect(Unit) {
+        Fbank.unitScale = vault.featureB
         modelMsg = withContext(Dispatchers.Default) {
             if (embedder.ensureLoaded()) "Speaker model ready: ${embedder.modelName}"
             else "Speaker model problem: ${embedder.error}"
@@ -87,13 +92,13 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
         }
     }
 
-    fun testVoice() {
+    fun test(asMe: Boolean) {
         if (!micOk) { onRequestPerms(); return }
         scope.launch {
             busy = true
             try {
-                status = "Recording 4 seconds - say anything..."
-                val pcm = Recorder.record(4)
+                status = "Recording 5 seconds - speak naturally..."
+                val pcm = Recorder.record(5)
                 val issue = Recorder.checkQuality(pcm, 3)
                 if (issue != null) {
                     status = issue
@@ -106,8 +111,8 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
                     if (s == null) {
                         status = "Could not score: ${embedder.error ?: "no profile"}"
                     } else {
-                        score = s
-                        status = if (s >= threshold) "MATCH - would be accepted" else "NO MATCH - would be rejected"
+                        if (asMe) meScores.add(s) else otherScores.add(s)
+                        status = "Score ${fmt(s)} recorded as " + (if (asMe) "ME." else "OTHER person.")
                     }
                 }
             } catch (e: Exception) {
@@ -139,7 +144,8 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
                 onClick = {
-                    vault.clear(); count = 0; enrolled = false; score = null
+                    vault.clear(); count = 0; enrolled = false
+                    meScores.clear(); otherScores.clear()
                     status = "Voice data deleted."
                 },
                 enabled = !busy
@@ -148,11 +154,33 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
 
         if (enrolled) {
             CxCard {
-                Text("2. Test and calibrate", style = MaterialTheme.typography.titleMedium)
+                Text("2. Reliability test", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
-                Button(onClick = { testVoice() }, enabled = !busy) { Text("Test my voice (4 s)") }
+                Text(
+                    "Record yourself 3 times and 2-3 different people (each speaking ~5 s). Silence is trimmed automatically.",
+                    color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+                )
                 Spacer(Modifier.height(8.dp))
-                score?.let { Text("Last score: ${fmt(it)}", style = MaterialTheme.typography.titleMedium) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { test(true) }, enabled = !busy) { Text("Test as ME") }
+                    OutlinedButton(onClick = { test(false) }, enabled = !busy) { Text("Test as OTHER") }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("Me: " + if (meScores.isEmpty()) "-" else meScores.joinToString { fmt(it) })
+                Text("Others: " + if (otherScores.isEmpty()) "-" else otherScores.joinToString { fmt(it) })
+                Spacer(Modifier.height(6.dp))
+                if (meScores.isNotEmpty() && otherScores.isNotEmpty()) {
+                    val minMe = meScores.minOf { it }
+                    val maxOther = otherScores.maxOf { it }
+                    if (minMe > maxOther + 0.05f) {
+                        Text("Good separation. Suggested threshold: ${fmt((minMe + maxOther) / 2f)}", color = Cx.Good)
+                    } else {
+                        Text(
+                            "NOT RELIABLE: another person scored up to ${fmt(maxOther)}, your lowest is ${fmt(minMe)}. Voice ID cannot be trusted yet.",
+                            color = Cx.Warn
+                        )
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
                 Text("Threshold: ${fmt(threshold)}", color = Cx.Muted)
                 Slider(
@@ -161,10 +189,36 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
                     onValueChangeFinished = { vault.threshold = threshold },
                     valueRange = 0.2f..0.9f
                 )
-                Text(
-                    "Test with your voice a few times, then let another person speak. Set the threshold above their scores and below yours.",
-                    color = Cx.Muted, style = MaterialTheme.typography.bodySmall
-                )
+                OutlinedButton(onClick = { meScores.clear(); otherScores.clear() }) { Text("Clear scores") }
+            }
+
+            CxCard {
+                Text("3. Experiment", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(
+                        checked = modeB,
+                        onCheckedChange = {
+                            modeB = it; Fbank.unitScale = it; vault.featureB = it
+                            status = "Feature mode changed. Tap Rebuild profile, then test again."
+                        }
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text("Feature mode B")
+                }
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            busy = true
+                            status = "Rebuilding profile..."
+                            status = withContext(Dispatchers.Default) { buildProfile(vault, embedder) }
+                            meScores.clear(); otherScores.clear()
+                            busy = false
+                        }
+                    },
+                    enabled = !busy
+                ) { Text("Rebuild profile from saved samples") }
             }
         }
 
@@ -172,7 +226,7 @@ fun SecurityScreen(vault: VoiceVault, embedder: SpeakerEmbedder, micOk: Boolean,
             CxCard { Text(status) }
         }
         Text(
-            "Testing mode: Voice ID does not authorize any action yet. Voice matching is not foolproof, so sensitive actions will also need phone unlock.",
+            "Voice ID is experimental. It does not authorize any action; calls, messages and private data use confirmation plus phone unlock.",
             color = Cx.Muted, style = MaterialTheme.typography.bodySmall
         )
     }

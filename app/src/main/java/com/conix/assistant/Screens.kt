@@ -28,8 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.conix.assistant.access.KoriAccessibility
+import com.conix.assistant.core.KoriCore
+import com.conix.assistant.notif.KoriNotificationListener
+import com.conix.assistant.wake.WakeService
 
 @Composable
 fun StatusRow(title: String, status: String, ok: Boolean) {
@@ -55,7 +61,8 @@ fun LangChips(lang: AppLang, onLang: (AppLang) -> Unit) {
 @Composable
 fun DashboardScreen(
     micOk: Boolean, notifOk: Boolean, lang: AppLang,
-    onGrant: () -> Unit, onQuick: (String) -> Unit, enrolled: Boolean = false
+    onGrant: () -> Unit, onQuick: (String) -> Unit,
+    enrolled: Boolean = false, brainReady: Boolean = false, wakeOn: Boolean = false
 ) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -72,10 +79,11 @@ fun DashboardScreen(
         CxCard {
             Text("System status", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
+            StatusRow("AI brain", if (brainReady) "Connected (key saved)" else "Offline commands only - add a key in Settings", brainReady)
+            StatusRow("Wake word \"Hey Kori\" (beta)", if (wakeOn) "Listening now" else "Off - start it in Settings", wakeOn)
             StatusRow("Microphone permission", if (micOk) "Granted" else "Not granted", micOk)
             StatusRow("Notifications permission", if (notifOk) "Granted" else "Not granted", notifOk)
-            StatusRow("Voice security (your voice only)", if (enrolled) "Profile saved - testing mode, no actions authorized yet" else "Not registered - open the Voice ID tab", enrolled)
-            StatusRow("Wake word \"Hey Kori\"", "Not enabled yet - Phase 3", false)
+            StatusRow("Voice ID", if (enrolled) "Profile saved - testing only, never authorizes actions" else "Not registered", enrolled)
             StatusRow("Active language", lang.label, true)
             if (!micOk || !notifOk) {
                 Spacer(Modifier.height(8.dp))
@@ -88,11 +96,11 @@ fun DashboardScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(onClick = { onQuick("open youtube") }, label = { Text("YouTube") })
                 AssistChip(onClick = { onQuick("open google") }, label = { Text("Google") })
-                AssistChip(onClick = { onQuick("open settings") }, label = { Text("Settings") })
+                AssistChip(onClick = { onQuick("hello") }, label = { Text("Hello") })
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                "Private actions stay locked until voice verification is added.",
+                "Calls, SMS, WhatsApp and message reading always need your confirmation and phone unlock.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
         }
@@ -141,18 +149,28 @@ fun VoiceScreen(
         if (error.isNotEmpty()) Text(error, color = Cx.Warn, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
         Text(
-            "Hands-free \"Hey Kori\" wake word comes in Phase 3. Language support depends on the speech packs installed on your phone.",
+            "For hands-free \"Hey Kori\", start the wake-word listener in Settings. Language support depends on the speech packs installed on your phone.",
             color = Cx.Muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-fun ChatScreen(messages: List<ChatLine>, onSend: (String) -> Unit) {
+fun ChatScreen(
+    messages: List<ChatLine>, thinking: Boolean, research: Boolean,
+    onResearch: (Boolean) -> Unit, onSend: (String) -> Unit
+) {
     var input by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     LaunchedEffect(messages.size) { if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1) }
     Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            FilterChip(selected = research, onClick = { onResearch(!research) }, label = { Text("Web research") })
+            if (thinking) {
+                Spacer(Modifier.width(12.dp))
+                Text("Kori is thinking...", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
         LazyColumn(
             Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp),
             state = listState, verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -184,15 +202,98 @@ fun ChatScreen(messages: List<ChatLine>, onSend: (String) -> Unit) {
 
 @Composable
 fun SettingsScreen(
-    lang: AppLang, micOk: Boolean, notifOk: Boolean,
-    onLang: (AppLang) -> Unit, onGrant: () -> Unit, onTestVoice: () -> Unit
+    core: KoriCore, lang: AppLang, micOk: Boolean, notifOk: Boolean,
+    onLang: (AppLang) -> Unit, onGrant: () -> Unit, onGrantComm: () -> Unit, onTestVoice: () -> Unit
 ) {
     val ctx = LocalContext.current
+    var provider by remember { mutableStateOf(core.prefs.provider) }
+    var model by remember { mutableStateOf(core.prefs.model) }
+    var keyInput by remember { mutableStateOf("") }
+    var keySaved by remember { mutableStateOf(core.brain.hasKey()) }
+    var factCount by remember { mutableIntStateOf(core.brain.facts().size) }
+    var minutes by remember { mutableIntStateOf(core.prefs.wakeMinutes) }
+
+    fun open(i: Intent) { try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { } }
+
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("Settings", style = MaterialTheme.typography.headlineSmall)
+
+        CxCard {
+            Text("AI brain", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = provider == "gemini", onClick = {
+                    provider = "gemini"; core.prefs.provider = "gemini"; model = core.prefs.model; keySaved = core.brain.hasKey()
+                }, label = { Text("Gemini (free tier)") })
+                FilterChip(selected = provider == "claude", onClick = {
+                    provider = "claude"; core.prefs.provider = "claude"; model = core.prefs.model; keySaved = core.brain.hasKey()
+                }, label = { Text("Claude (paid)") })
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = model, onValueChange = { model = it; core.prefs.model = it },
+                label = { Text("Model name") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = keyInput, onValueChange = { keyInput = it },
+                label = { Text(if (keySaved) "API key saved - paste to replace" else "API key") },
+                singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    if (keyInput.isNotBlank()) {
+                        core.secrets.put("key_$provider", keyInput.trim()); keyInput = ""; keySaved = true
+                    }
+                }) { Text("Save key") }
+                OutlinedButton(onClick = { core.secrets.remove("key_$provider"); keySaved = false }) { Text("Remove key") }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Free Gemini key: aistudio.google.com. If you see a model error, change the model name. The key is stored encrypted on this phone.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("Memory: $factCount saved facts", color = Cx.Muted)
+            OutlinedButton(onClick = { core.brain.clearMemory(); factCount = 0 }) { Text("Clear memory") }
+        }
+
+        CxCard {
+            Text("Wake word \"Hey Kori\" (beta)", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
+            Text("Auto-stop after:", color = Cx.Muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(10, 30, 60).forEach { m ->
+                    FilterChip(selected = minutes == m, onClick = { minutes = m; core.prefs.wakeMinutes = m }, label = { Text("$m min") })
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    if (!micOk) onGrant() else ContextCompat.startForegroundService(ctx, Intent(ctx, WakeService::class.java))
+                }) { Text("Start listening") }
+                OutlinedButton(onClick = { ctx.stopService(Intent(ctx, WakeService::class.java)) }) { Text("Stop") }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                if (KoriBus.wakeActive) "Listening now. A notification shows while the microphone is on." else "Off.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                "Beta: uses Android speech recognition, so it uses more battery and may mishear. Opening apps while the phone is in the background may need you to tap a notification.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(6.dp))
+            OutlinedButton(onClick = {
+                open(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + ctx.packageName)))
+            }) { Text("Allow display over other apps (optional)") }
+        }
+
         CxCard {
             Text("Language", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
@@ -200,29 +301,41 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = onTestVoice) { Text("Test voice output") }
         }
+
         CxCard {
-            Text("Permissions", style = MaterialTheme.typography.titleMedium)
+            Text("Permissions and access", style = MaterialTheme.typography.titleMedium)
             StatusRow("Microphone", if (micOk) "Granted" else "Not granted", micOk)
             StatusRow("Notifications", if (notifOk) "Granted" else "Not granted", notifOk)
+            StatusRow("Accessibility (YouTube tapping)", if (KoriAccessibility.instance != null) "On" else "Off", KoriAccessibility.instance != null)
+            StatusRow("Notification access (reading)", if (KoriNotificationListener.connected) "On" else "Off", KoriNotificationListener.connected)
+            Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onGrant) { Text("Request") }
-                OutlinedButton(onClick = {
-                    ctx.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + ctx.packageName))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                }) { Text("App settings") }
+                Button(onClick = onGrant) { Text("Mic + notifications") }
+                OutlinedButton(onClick = onGrantComm) { Text("Contacts, calls, SMS") }
             }
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { open(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }) { Text("Accessibility") }
+                OutlinedButton(onClick = { open(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }) { Text("Notification access") }
+            }
+            Spacer(Modifier.height(6.dp))
+            OutlinedButton(onClick = {
+                open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + ctx.packageName)))
+            }) { Text("App settings (allow restricted settings)") }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Android 13+: if Accessibility or Notification access is greyed out, open App settings, tap the three dots and choose Allow restricted settings.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
         }
-        CxCard {
-            Text("Wake phrase", style = MaterialTheme.typography.titleMedium)
-            Text("Hey Kori", color = Cx.Accent)
-            Text("Detection is not active yet (Phase 3).", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
-        }
+
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("Kori AI v0.3.1 - Phase 2 build", color = Cx.Muted)
-            Text("Voice ID is in testing mode and does not authorize actions yet.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+            Text("Kori AI v0.4.0", color = Cx.Muted)
+            Text(
+                "Voice ID is experimental and never authorizes actions. Sensitive actions use confirmation plus phone unlock.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
