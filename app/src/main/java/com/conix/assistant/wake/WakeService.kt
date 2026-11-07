@@ -1,27 +1,35 @@
 package com.conix.assistant.wake
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.ContactsContract
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.telephony.TelephonyManager
 import com.conix.assistant.AppLang
 import com.conix.assistant.ChatLine
 import com.conix.assistant.KoriBus
 import com.conix.assistant.MainActivity
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.core.Notifs
+import com.conix.assistant.notif.KoriNotificationListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,7 +38,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Beta "Hey Kori" listener. Uses Android speech recognition (on-device when available) and
- * reacts only to phrases that start with the wake word. Runs as a visible foreground service.
+ * reacts only to phrases that start with the wake word. Also announces incoming calls and
+ * (optionally) WhatsApp messages, and asks for a spoken "yes" before sending messages.
  */
 class WakeService : Service(), RecognitionListener {
     private val handler = Handler(Looper.getMainLooper())
@@ -44,10 +53,43 @@ class WakeService : Service(), RecognitionListener {
     private var busy = false
     private var onDevice = true
 
+    private var awaitingConfirm = false
+    private var confirmUntil = 0L
+    private var replyUntil = 0L
+    private var callMode = false
+    private var ringing = false
+    private var ringNumber: String? = null
+    private var receiverRegistered = false
+
+    private val I = RegexOption.IGNORE_CASE
     private val wakeRe = Regex(
-        "^\\s*(?:(?:hey|hi|hello|ok|okay)\\s+)?(?:kori|corey|cory|kauri|khori)\\b[\\s,.!]*",
-        RegexOption.IGNORE_CASE
+        "^\\s*(?:(?:hey|hi|hello|ok|okay)\\s+)?(?:kori|corey|cory|kauri|khori)\\b[\\s,.!]*", I
     )
+    private val yesRe = Regex("\\b(yes|yeah|yep|yup|confirm|send|haan|han|ha|ok|okay|kar do|karo)\\b|हाँ|हां|ହଁ", I)
+    private val answerRe = Regex("\\b(answer|pick|receive|accept|utha|uthao|uthalo|yes|haan)\\b|उठा|रिसीव", I)
+    private val rejectRe = Regex("\\b(reject|decline|cut|cancel|disconnect|kaat|kat|no|nahi)\\b|काट", I)
+    private val replyRe = Regex("^(reply|jawab|jawaab|bolo)\\b\\s*", I)
+
+    private val phoneReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context?, i: Intent?) {
+            val state = i?.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
+            when (state) {
+                TelephonyManager.EXTRA_STATE_RINGING -> {
+                    val num = i.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+                    onRinging(num)
+                }
+                TelephonyManager.EXTRA_STATE_OFFHOOK -> {
+                    ringing = false; callMode = false
+                    busy = true; stopListening()
+                }
+                TelephonyManager.EXTRA_STATE_IDLE -> {
+                    val wasCall = ringing || callMode || busy
+                    ringing = false; callMode = false; ringNumber = null
+                    if (wasCall && !awaitingConfirm) handler.postDelayed({ resume() }, 1000)
+                }
+            }
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -72,6 +114,19 @@ class WakeService : Service(), RecognitionListener {
         stopAt = System.currentTimeMillis() + core.prefs.wakeMinutes * 60_000L
         KoriBus.wakeActive = true
         busy = false
+        if (core.prefs.announceWa) {
+            KoriNotificationListener.onWhatsApp = { s: String, t: String -> onWhatsApp(s, t) }
+        } else {
+            KoriNotificationListener.onWhatsApp = null
+        }
+        if (core.prefs.callAssist && !receiverRegistered) {
+            try {
+                val f = IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
+                if (Build.VERSION.SDK_INT >= 33) registerReceiver(phoneReceiver, f, Context.RECEIVER_EXPORTED)
+                else registerReceiver(phoneReceiver, f)
+                receiverRegistered = true
+            } catch (_: Exception) { }
+        }
         startListening()
         return START_NOT_STICKY
     }
@@ -134,9 +189,81 @@ class WakeService : Service(), RecognitionListener {
 
     private fun resume() { busy = false; startListening() }
 
+    // ---------- incoming calls ----------
+    private fun contactName(number: String?): String? {
+        if (number.isNullOrBlank()) return null
+        return try {
+            val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
+            contentResolver.query(uri, arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME), null, null, null)?.use {
+                if (it.moveToFirst()) it.getString(0) else null
+            }
+        } catch (e: Exception) { null }
+    }
+
+    private fun onRinging(num: String?) {
+        if (num != null) ringNumber = num
+        if (ringing) return
+        ringing = true
+        handler.postDelayed({ if (ringing) announceCall() }, 900)
+    }
+
+    private fun announceCall() {
+        val who = contactName(ringNumber) ?: ringNumber?.let { it.toList().joinToString(" ") } ?: "an unknown number"
+        busy = true
+        stopListening()
+        callMode = true
+        KoriBus.messages.add(ChatLine("conix", "Incoming call from ${contactName(ringNumber) ?: ringNumber ?: "unknown"}"))
+        say("Incoming call from $who. Say answer or reject.") { busy = false; startListening() }
+    }
+
+    private fun handleCall(h: String) {
+        when {
+            answerRe.containsMatchIn(h) -> {
+                callMode = false
+                val r = core.callControl(true)
+                KoriBus.messages.add(ChatLine("conix", r))
+                busy = true; stopListening()
+            }
+            rejectRe.containsMatchIn(h) -> {
+                callMode = false
+                val r = core.callControl(false)
+                KoriBus.messages.add(ChatLine("conix", r))
+                busy = true; stopListening()
+                say(r) { resume() }
+            }
+            else -> handler.postDelayed({ startListening() }, 300)
+        }
+    }
+
+    // ---------- WhatsApp announcements ----------
+    private fun onWhatsApp(sender: String, text: String) {
+        if (busy || callMode || awaitingConfirm) return
+        val km = getSystemService(KeyguardManager::class.java)
+        if (km.isKeyguardLocked) return   // never read private messages aloud on a locked phone
+        busy = true
+        stopListening()
+        KoriBus.messages.add(ChatLine("conix", "WhatsApp - $sender: $text"))
+        replyUntil = System.currentTimeMillis() + 20_000
+        say("WhatsApp message from $sender. ${text.take(200)}. Say reply, then your message, to answer.") { resume() }
+    }
+
+    // ---------- recognition results ----------
     override fun onResults(results: Bundle?) {
         val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().trim()
         if (heard.isEmpty()) { handler.postDelayed({ startListening() }, 300); return }
+        val h = heard.lowercase()
+
+        if (awaitingConfirm && System.currentTimeMillis() > confirmUntil) {
+            awaitingConfirm = false; KoriBus.pending = null
+        }
+        if (awaitingConfirm) { handleConfirm(h); return }
+        if (callMode) { handleCall(h); return }
+        if (System.currentTimeMillis() < replyUntil && replyRe.containsMatchIn(heard)) {
+            replyUntil = 0
+            runCommand("reply " + heard.replace(replyRe, ""))
+            return
+        }
+
         val stripped = heard.replace(wakeRe, "").trim()
         val addressed = stripped.length != heard.length
         when {
@@ -151,6 +278,22 @@ class WakeService : Service(), RecognitionListener {
         }
     }
 
+    private fun handleConfirm(h: String) {
+        awaitingConfirm = false
+        val p = KoriBus.pending
+        KoriBus.pending = null
+        busy = true
+        stopListening()
+        if (p != null && yesRe.containsMatchIn(h)) {
+            val r = try { p.run() } catch (e: Exception) { "Failed: ${e.message}" }
+            KoriBus.messages.add(ChatLine("conix", r))
+            say(r.take(200)) { resume() }
+        } else {
+            KoriBus.messages.add(ChatLine("conix", "Cancelled."))
+            say("Cancelled.") { resume() }
+        }
+    }
+
     private fun runCommand(cmd: String) {
         busy = true
         stopListening()
@@ -161,12 +304,19 @@ class WakeService : Service(), RecognitionListener {
         }
         KoriBus.messages.add(ChatLine("you", cmd))
         scope.launch {
-            val reply = try { core.handle(cmd) } catch (e: Exception) { "Error: ${e.message}" }
+            val reply = try { core.handle(cmd, false, false) } catch (e: Exception) { "Error: ${e.message}" }
             KoriBus.messages.add(ChatLine("conix", reply))
             var spoken = reply.substringBefore("\n\nSources:").take(300)
-            if (KoriBus.pending != null) {
-                Notifs.needsConfirmation(this@WakeService)
-                spoken += " Please confirm on your phone."
+            val p = KoriBus.pending
+            if (p != null) {
+                if (p.needsUnlock) {
+                    Notifs.needsConfirmation(this@WakeService)
+                    spoken = "Please confirm on your phone."
+                } else {
+                    awaitingConfirm = true
+                    confirmUntil = System.currentTimeMillis() + 25_000
+                    spoken = (p.title + " " + p.detail.replace("\n", ". ") + " Say yes to confirm.").take(300)
+                }
             }
             say(spoken) { resume() }
         }
@@ -190,6 +340,8 @@ class WakeService : Service(), RecognitionListener {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        KoriNotificationListener.onWhatsApp = null
+        if (receiverRegistered) { try { unregisterReceiver(phoneReceiver) } catch (_: Exception) { } }
         sr?.destroy()
         tts?.stop(); tts?.shutdown()
         scope.cancel()
