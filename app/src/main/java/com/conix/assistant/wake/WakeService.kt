@@ -1,5 +1,6 @@
 package com.conix.assistant.wake
 
+import android.Manifest
 import android.app.KeyguardManager
 import android.app.Notification
 import android.app.PendingIntent
@@ -8,25 +9,32 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.ContactsContract
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.telephony.SmsManager
 import android.telephony.TelephonyManager
+import androidx.core.content.ContextCompat
 import com.conix.assistant.AppLang
 import com.conix.assistant.ChatLine
 import com.conix.assistant.KoriBus
 import com.conix.assistant.MainActivity
+import com.conix.assistant.core.CallNotes
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.core.Notifs
 import com.conix.assistant.notif.KoriNotificationListener
@@ -37,9 +45,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Beta "Hey Kori" listener. Uses Android speech recognition (on-device when available) and
- * reacts only to phrases that start with the wake word. Also announces incoming calls and
- * (optionally) WhatsApp messages, and asks for a spoken "yes" before sending messages.
+ * "Hey Kori" listener (beta). Reacts only to phrases starting with the wake word. Also announces
+ * incoming calls, can answer them in Away mode and take a message, and reads WhatsApp messages.
  */
 class WakeService : Service(), RecognitionListener {
     private val handler = Handler(Looper.getMainLooper())
@@ -48,6 +55,7 @@ class WakeService : Service(), RecognitionListener {
     private var sr: SpeechRecognizer? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    private var wl: PowerManager.WakeLock? = null
     private var stopAt = 0L
     private var awaiting = false
     private var busy = false
@@ -60,6 +68,13 @@ class WakeService : Service(), RecognitionListener {
     private var ringing = false
     private var ringNumber: String? = null
     private var receiverRegistered = false
+
+    // Away mode call screening
+    private var awayCall = false
+    private var awayRound = 0
+    private var awayWho = ""
+    private var awayNumber: String? = null
+    private val awayLines = ArrayList<String>()
 
     private val I = RegexOption.IGNORE_CASE
     private val wakeRe = Regex(
@@ -74,16 +89,14 @@ class WakeService : Service(), RecognitionListener {
         override fun onReceive(c: Context?, i: Intent?) {
             val state = i?.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
             when (state) {
-                TelephonyManager.EXTRA_STATE_RINGING -> {
-                    val num = i.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
-                    onRinging(num)
-                }
+                TelephonyManager.EXTRA_STATE_RINGING -> onRinging(i.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER))
                 TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                    ringing = false; callMode = false
-                    busy = true; stopListening()
+                    ringing = false
+                    if (!awayCall) { callMode = false; busy = true; stopListening() }
                 }
                 TelephonyManager.EXTRA_STATE_IDLE -> {
-                    val wasCall = ringing || callMode || busy
+                    val wasCall = ringing || callMode || awayCall || busy
+                    if (awayCall) endAway(false)
                     ringing = false; callMode = false; ringNumber = null
                     if (wasCall && !awaitingConfirm) handler.postDelayed({ resume() }, 1000)
                 }
@@ -99,6 +112,10 @@ class WakeService : Service(), RecognitionListener {
         tts = TextToSpeech(this) { ttsReady = it == TextToSpeech.SUCCESS }
     }
 
+    private fun awayActive() = System.currentTimeMillis() < core.prefs.awayUntil
+    private fun owner() = core.prefs.ownerName.ifBlank { "the owner" }
+    private fun granted(p: String) = ContextCompat.checkSelfPermission(this, p) == PackageManager.PERMISSION_GRANTED
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) { stopSelf(); return START_NOT_STICKY }
         Notifs.ensure(this)
@@ -111,15 +128,19 @@ class WakeService : Service(), RecognitionListener {
             stopSelf()
             return START_NOT_STICKY
         }
-        stopAt = System.currentTimeMillis() + core.prefs.wakeMinutes * 60_000L
+        val now = System.currentTimeMillis()
+        val awayLeft = core.prefs.awayUntil - now
+        stopAt = now + maxOf(core.prefs.wakeMinutes * 60_000L, if (awayLeft > 0) awayLeft + 120_000L else 0L)
+        try {
+            wl?.let { if (it.isHeld) it.release() }
+            wl = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "kori:listen")
+                .apply { acquire(stopAt - now + 60_000L) }
+        } catch (_: Exception) { }
         KoriBus.wakeActive = true
         busy = false
-        if (core.prefs.announceWa) {
-            KoriNotificationListener.onWhatsApp = { s: String, t: String -> onWhatsApp(s, t) }
-        } else {
-            KoriNotificationListener.onWhatsApp = null
-        }
-        if (core.prefs.callAssist && !receiverRegistered) {
+        KoriNotificationListener.onWhatsApp =
+            if (core.prefs.announceWa) { s: String, t: String -> onWhatsApp(s, t) } else null
+        if (!receiverRegistered) {
             try {
                 val f = IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
                 if (Build.VERSION.SDK_INT >= 33) registerReceiver(phoneReceiver, f, Context.RECEIVER_EXPORTED)
@@ -151,6 +172,10 @@ class WakeService : Service(), RecognitionListener {
     private fun startListening() {
         if (busy) return
         if (System.currentTimeMillis() > stopAt) { stopSelf(); return }
+        beginRecognition()
+    }
+
+    private fun beginRecognition() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             KoriBus.messages.add(ChatLine("conix", "Speech recognition is not available on this phone."))
             stopSelf(); return
@@ -174,10 +199,17 @@ class WakeService : Service(), RecognitionListener {
         sr = null
     }
 
-    private fun say(text: String, then: () -> Unit) {
+    /** [call] = true plays the voice through the in-call audio path (heard by the caller when on speaker). */
+    private fun say(text: String, call: Boolean = false, then: () -> Unit) {
         val t = tts
         if (t == null || !ttsReady) { then(); return }
         t.setLanguage(currentLang().locale)
+        t.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(if (call) AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_ASSISTANT)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+        )
         t.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) { handler.post { then() } }
@@ -203,12 +235,14 @@ class WakeService : Service(), RecognitionListener {
     private fun onRinging(num: String?) {
         if (num != null) ringNumber = num
         if (ringing) return
+        if (!awayActive() && !core.prefs.callAssist) return
         ringing = true
         handler.postDelayed({ if (ringing) announceCall() }, 900)
     }
 
     private fun announceCall() {
-        val who = contactName(ringNumber) ?: ringNumber?.let { it.toList().joinToString(" ") } ?: "an unknown number"
+        if (awayActive()) { startAwayCall(); return }
+        val who = contactName(ringNumber) ?: ringNumber?.toList()?.joinToString(" ") ?: "an unknown number"
         busy = true
         stopListening()
         callMode = true
@@ -220,8 +254,7 @@ class WakeService : Service(), RecognitionListener {
         when {
             answerRe.containsMatchIn(h) -> {
                 callMode = false
-                val r = core.callControl(true)
-                KoriBus.messages.add(ChatLine("conix", r))
+                KoriBus.messages.add(ChatLine("conix", core.callControl(true)))
                 busy = true; stopListening()
             }
             rejectRe.containsMatchIn(h) -> {
@@ -235,9 +268,84 @@ class WakeService : Service(), RecognitionListener {
         }
     }
 
+    // ---------- Away mode: answer, ask the reason, leave a note ----------
+    private fun startAwayCall() {
+        awayCall = true; callMode = false
+        awayLines.clear(); awayRound = 0
+        awayNumber = ringNumber
+        awayWho = contactName(ringNumber) ?: ringNumber ?: "an unknown number"
+        busy = true
+        stopListening()
+        val r = core.callControl(true)
+        if (!r.startsWith("Answering")) {
+            awayCall = false
+            KoriBus.messages.add(ChatLine("conix", "Away mode could not answer the call: $r"))
+            resume(); return
+        }
+        handler.postDelayed({ awayGreet() }, 1500)
+    }
+
+    private fun awayGreet() {
+        if (!awayCall) return
+        try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = true } catch (_: Exception) { }
+        say(
+            "Hello, this is Kori, an AI assistant for ${owner()}. ${owner()} is unavailable right now. " +
+                "This call may be transcribed so I can pass on your message. Please tell me your name and why you are calling.",
+            true
+        ) { if (awayCall) beginRecognition() }
+    }
+
+    private fun handleAwayResult(heard: String) {
+        if (!awayCall) return
+        if (heard.isNotBlank()) awayLines.add(heard)
+        awayRound++
+        val words = awayLines.joinToString(" ").trim().split(Regex("\\s+")).count { it.isNotBlank() }
+        when {
+            awayLines.isEmpty() && awayRound >= 2 ->
+                say("I couldn't hear you. I'll tell ${owner()} that you called. Please send a message instead. Goodbye.", true) { endAway(true) }
+            awayLines.isEmpty() ->
+                say("Sorry, I couldn't hear you. Please tell me your name and why you are calling.", true) { if (awayCall) beginRecognition() }
+            words < 5 && awayRound < 3 ->
+                say("Thank you. Could you tell me a little more?", true) { if (awayCall) beginRecognition() }
+            else ->
+                say("Thank you. I've noted that and will pass it to ${owner()}. Goodbye.", true) { endAway(true) }
+        }
+    }
+
+    private fun endAway(hangUp: Boolean) {
+        if (!awayCall) return
+        awayCall = false
+        stopListening()
+        if (hangUp) core.callControl(false)
+        try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = false } catch (_: Exception) { }
+        val who = awayWho
+        val num = awayNumber
+        val transcript = awayLines.joinToString(" / ")
+        awayLines.clear()
+        scope.launch {
+            val note = if (transcript.isBlank()) "Called, but I couldn't hear a message." else core.summarizeCall(who, transcript)
+            CallNotes.add(core.secrets, who, note, transcript)
+            KoriBus.notesTick++
+            KoriBus.messages.add(ChatLine("conix", "Call note - $who: $note"))
+            if (transcript.isBlank() && num != null && core.prefs.awaySms) sendAwaySms(num)
+        }
+        busy = false
+        handler.postDelayed({ resume() }, 1200)
+    }
+
+    private fun sendAwaySms(num: String) {
+        if (!granted(Manifest.permission.SEND_SMS)) return
+        try {
+            val sm = if (Build.VERSION.SDK_INT >= 31) getSystemService(SmsManager::class.java)
+            else @Suppress("DEPRECATION") SmsManager.getDefault()
+            val text = "Kori (AI assistant of ${owner()}): ${owner()} can't talk right now. Please text your name and reason and they will get back to you."
+            sm.sendMultipartTextMessage(num, null, sm.divideMessage(text), null, null)
+        } catch (_: Exception) { }
+    }
+
     // ---------- WhatsApp announcements ----------
     private fun onWhatsApp(sender: String, text: String) {
-        if (busy || callMode || awaitingConfirm) return
+        if (busy || callMode || awayCall || awaitingConfirm) return
         val km = getSystemService(KeyguardManager::class.java)
         if (km.isKeyguardLocked) return   // never read private messages aloud on a locked phone
         busy = true
@@ -250,6 +358,7 @@ class WakeService : Service(), RecognitionListener {
     // ---------- recognition results ----------
     override fun onResults(results: Bundle?) {
         val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().trim()
+        if (awayCall) { handleAwayResult(heard); return }
         if (heard.isEmpty()) { handler.postDelayed({ startListening() }, 300); return }
         val h = heard.lowercase()
 
@@ -304,9 +413,9 @@ class WakeService : Service(), RecognitionListener {
         }
         KoriBus.messages.add(ChatLine("you", cmd))
         scope.launch {
-            val reply = try { core.handle(cmd, false, false) } catch (e: Exception) { "Error: ${e.message}" }
+            val reply = try { core.handle(cmd, false) } catch (e: Exception) { "Error: ${e.message}" }
             KoriBus.messages.add(ChatLine("conix", reply))
-            var spoken = reply.substringBefore("\n\nSources:").take(300)
+            var spoken = reply.substringBefore("\n\nSources:").take(400)
             val p = KoriBus.pending
             if (p != null) {
                 if (p.needsUnlock) {
@@ -323,6 +432,7 @@ class WakeService : Service(), RecognitionListener {
     }
 
     override fun onError(error: Int) {
+        if (awayCall) { handleAwayResult(""); return }
         if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) { stopSelf(); return }
         if (error == 12 || error == 13) onDevice = false   // language not supported on-device
         if (busy) return
@@ -342,6 +452,7 @@ class WakeService : Service(), RecognitionListener {
         handler.removeCallbacksAndMessages(null)
         KoriNotificationListener.onWhatsApp = null
         if (receiverRegistered) { try { unregisterReceiver(phoneReceiver) } catch (_: Exception) { } }
+        try { wl?.let { if (it.isHeld) it.release() } } catch (_: Exception) { }
         sr?.destroy()
         tts?.stop(); tts?.shutdown()
         scope.cancel()
