@@ -104,17 +104,19 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
         commLauncher.launch(
             arrayOf(
                 Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE,
-                Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS
+                Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS,
+                Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.ANSWER_PHONE_CALLS
             )
         )
     }
-    fun send(text: String) {
+    fun send(text: String, typed: Boolean = true) {
         val t = text.trim()
         if (t.isEmpty() || thinking) return
         messages.add(ChatLine("you", t))
         thinking = true
         scope.launch {
-            val reply = try { core.handle(t, research) } catch (e: Exception) { "Error: ${e.message}" }
+            val reply = try { core.handle(t, research, typed) } catch (e: Exception) { "Error: ${e.message}" }
             messages.add(ChatLine("conix", reply))
             if (!speak(reply.substringBefore("\n\nSources:").take(400), lang)) {
                 messages.add(ChatLine("conix", "(Voice output for ${lang.label} is not installed on this phone. Showing text only.)"))
@@ -124,7 +126,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
     }
 
     LaunchedEffect(Unit) { delay(1600); splash = false }
-    LaunchedEffect(tab) {
+    LaunchedEffect(tab, KoriBus.resumeTick) {
         micOk = hasMic(ctx); notifOk = hasNotif(ctx)
         enrolled = vault.isEnrolled(); brainReady = core.brain.hasKey()
     }
@@ -170,7 +172,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
                             lang, micOk,
                             onLang = { lang = it },
                             onRequestPerms = { requestPerms() },
-                            onHeard = { send(it); tab = Tab.Chat }
+                            onHeard = { send(it, false); tab = Tab.Chat }
                         )
                         Tab.Chat -> ChatScreen(
                             messages, thinking, research,
@@ -198,12 +200,14 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean) {
             AlertDialog(
                 onDismissRequest = { KoriBus.pending = null },
                 title = { Text(pending.title) },
-                text = { Text(pending.detail + "\n\nYou will be asked to unlock your phone.") },
+                text = { Text(pending.detail + if (pending.needsUnlock) "\n\nYou will be asked to unlock your phone." else "") },
                 confirmButton = {
                     TextButton(onClick = {
                         KoriBus.pending = null
                         val act = ctx.findActivity()
-                        if (act == null) {
+                        if (!pending.needsUnlock) {
+                            messages.add(ChatLine("conix", pending.run()))
+                        } else if (act == null) {
                             messages.add(ChatLine("conix", "Could not ask for phone unlock."))
                         } else {
                             Gate.authenticate(act, pending.title) { ok ->

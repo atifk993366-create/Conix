@@ -1,12 +1,13 @@
 package com.conix.assistant
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/** An action that needs the user's confirmation and phone unlock before it runs. */
-class PendingAction(val title: String, val detail: String, val run: () -> String)
+/** An action waiting for confirmation (and phone unlock when [needsUnlock] is true). */
+class PendingAction(val title: String, val detail: String, val needsUnlock: Boolean = true, val run: () -> String)
 
 object KoriBus {
     val messages = mutableStateListOf(
@@ -14,5 +15,6 @@ object KoriBus {
     )
     var pending by mutableStateOf<PendingAction?>(null)
     var wakeActive by mutableStateOf(false)
+    var resumeTick by mutableIntStateOf(0)
     @Volatile var appInForeground = false
 }

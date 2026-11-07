@@ -1,6 +1,8 @@
 package com.conix.assistant
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
@@ -201,19 +203,85 @@ fun ChatScreen(
 }
 
 @Composable
+private fun PermRow(label: String, perm: String, tick: Int) {
+    val ctx = LocalContext.current
+    val ok = tick >= 0 && ContextCompat.checkSelfPermission(ctx, perm) == PackageManager.PERMISSION_GRANTED
+    StatusRow(label, if (ok) "Granted" else "Not granted", ok)
+}
+
+@Composable
+private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+@Composable
+private fun BlockedAppsDialog(initial: Set<String>, onDone: (Set<String>) -> Unit, onCancel: () -> Unit) {
+    val ctx = LocalContext.current
+    val apps = remember {
+        val pm = ctx.packageManager
+        pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+            .map { it.loadLabel(pm).toString() to it.activityInfo.packageName }
+            .distinctBy { it.second }
+            .sortedBy { it.first.lowercase() }
+    }
+    val sel = remember { mutableStateListOf<String>().apply { addAll(initial) } }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Apps Kori must ignore") },
+        text = {
+            LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                items(apps) { app ->
+                    val pkg = app.second
+                    Row(
+                        Modifier.fillMaxWidth().clickable { if (pkg in sel) sel.remove(pkg) else sel.add(pkg) },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(checked = pkg in sel, onCheckedChange = { if (it) { if (pkg !in sel) sel.add(pkg) } else sel.remove(pkg) })
+                        Column {
+                            Text(app.first)
+                            Text(pkg, color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onDone(sel.toSet()) }) { Text("Save") } },
+        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } }
+    )
+}
+
+@Composable
 fun SettingsScreen(
     core: KoriCore, lang: AppLang, micOk: Boolean, notifOk: Boolean,
     onLang: (AppLang) -> Unit, onGrant: () -> Unit, onGrantComm: () -> Unit, onTestVoice: () -> Unit
 ) {
     val ctx = LocalContext.current
+    val tick = KoriBus.resumeTick   // forces a refresh when you return from system settings
     var provider by remember { mutableStateOf(core.prefs.provider) }
     var model by remember { mutableStateOf(core.prefs.model) }
     var keyInput by remember { mutableStateOf("") }
     var keySaved by remember { mutableStateOf(core.brain.hasKey()) }
     var factCount by remember { mutableIntStateOf(core.brain.facts().size) }
     var minutes by remember { mutableIntStateOf(core.prefs.wakeMinutes) }
+    var safety by remember { mutableStateOf(core.prefs.safety) }
+    var callAssist by remember { mutableStateOf(core.prefs.callAssist) }
+    var announceWa by remember { mutableStateOf(core.prefs.announceWa) }
+    var autoSend by remember { mutableStateOf(core.prefs.autoSendWa) }
+    var blocked by remember { mutableStateOf(core.prefs.blockedApps) }
+    var showPicker by remember { mutableStateOf(false) }
 
     fun open(i: Intent) { try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { } }
+
+    if (showPicker) {
+        BlockedAppsDialog(
+            initial = blocked,
+            onDone = { blocked = it; core.prefs.blockedApps = it; showPicker = false },
+            onCancel = { showPicker = false }
+        )
+    }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -264,6 +332,32 @@ fun SettingsScreen(
         }
 
         CxCard {
+            Text("Speed and safety", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = safety == "smooth", onClick = { safety = "smooth"; core.prefs.safety = "smooth" }, label = { Text("Smooth") })
+                FilterChip(selected = safety == "strict", onClick = { safety = "strict"; core.prefs.safety = "strict" }, label = { Text("Strict") })
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Smooth: calls and WhatsApp drafts run instantly. Messages you type go straight out; messages from your voice need a spoken \"yes\". Private reads need an unlocked phone. Strict: always confirm and unlock.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        CxCard {
+            Text("Calls and WhatsApp", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            SwitchRow("Announce incoming calls (say answer / reject)", callAssist) { callAssist = it; core.prefs.callAssist = it }
+            SwitchRow("Read new WhatsApp messages aloud", announceWa) { announceWa = it; core.prefs.announceWa = it }
+            SwitchRow("Auto-tap Send in WhatsApp", autoSend) { autoSend = it; core.prefs.autoSendWa = it }
+            Text(
+                "Call and message announcements work while the Hey Kori listener is on. After a message is read, say \"reply\" and your answer. Only the standard WhatsApp (com.whatsapp) is used.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        CxCard {
             Text("Wake word \"Hey Kori\" (beta)", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             Text("Auto-stop after:", color = Cx.Muted)
@@ -285,13 +379,31 @@ fun SettingsScreen(
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
             Text(
-                "Beta: uses Android speech recognition, so it uses more battery and may mishear. Opening apps while the phone is in the background may need you to tap a notification.",
+                "Beta: uses Android speech recognition, so it uses more battery and may mishear. Android may block opening apps from the background; Kori then shows a tap-to-open notification.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(6.dp))
             OutlinedButton(onClick = {
                 open(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + ctx.packageName)))
-            }) { Text("Allow display over other apps (optional)") }
+            }) { Text("Allow display over other apps") }
+        }
+
+        CxCard {
+            Text("Excluded apps", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Kori will never open these apps or read their notifications. WhatsApp Business is excluded by default.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(if (blocked.isEmpty()) "None" else blocked.joinToString("\n"))
+            Spacer(Modifier.height(6.dp))
+            Button(onClick = { showPicker = true }) { Text("Choose apps to exclude") }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Cloned apps (dual apps) live in a separate profile that Kori cannot reach, so they are never touched.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
         }
 
         CxCard {
@@ -306,8 +418,19 @@ fun SettingsScreen(
             Text("Permissions and access", style = MaterialTheme.typography.titleMedium)
             StatusRow("Microphone", if (micOk) "Granted" else "Not granted", micOk)
             StatusRow("Notifications", if (notifOk) "Granted" else "Not granted", notifOk)
-            StatusRow("Accessibility (YouTube tapping)", if (KoriAccessibility.instance != null) "On" else "Off", KoriAccessibility.instance != null)
-            StatusRow("Notification access (reading)", if (KoriNotificationListener.connected) "On" else "Off", KoriNotificationListener.connected)
+            PermRow("Contacts", Manifest.permission.READ_CONTACTS, tick)
+            PermRow("Make calls", Manifest.permission.CALL_PHONE, tick)
+            PermRow("Answer / reject calls", Manifest.permission.ANSWER_PHONE_CALLS, tick)
+            PermRow("Phone state (incoming call alerts)", Manifest.permission.READ_PHONE_STATE, tick)
+            PermRow("Caller number", Manifest.permission.READ_CALL_LOG, tick)
+            PermRow("Send SMS", Manifest.permission.SEND_SMS, tick)
+            PermRow("Read SMS", Manifest.permission.READ_SMS, tick)
+            val acc = KoriAccessibility.instance != null
+            val nl = KoriNotificationListener.connected
+            val overlay = Settings.canDrawOverlays(ctx)
+            StatusRow("Accessibility (YouTube / WhatsApp tapping)", if (acc) "On" else "Off", acc)
+            StatusRow("Notification access (WhatsApp, reading)", if (nl) "On" else "Off", nl)
+            StatusRow("Display over other apps", if (overlay) "Allowed" else "Not allowed (optional)", overlay)
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onGrant) { Text("Mic + notifications") }
@@ -324,16 +447,16 @@ fun SettingsScreen(
             }) { Text("App settings (allow restricted settings)") }
             Spacer(Modifier.height(4.dp))
             Text(
-                "Android 13+: if Accessibility or Notification access is greyed out, open App settings, tap the three dots and choose Allow restricted settings.",
+                "Statuses refresh when you come back from system settings. If a permission stays off, open App settings, tap the three dots and choose Allow restricted settings.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
         }
 
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("Kori AI v0.4.0", color = Cx.Muted)
+            Text("Kori AI v0.5.0", color = Cx.Muted)
             Text(
-                "Voice ID is experimental and never authorizes actions. Sensitive actions use confirmation plus phone unlock.",
+                "Voice ID is experimental and never authorizes actions.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
         }
