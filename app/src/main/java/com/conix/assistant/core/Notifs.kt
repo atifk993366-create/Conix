@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import com.conix.assistant.KoriBus
 import com.conix.assistant.MainActivity
+import com.conix.assistant.access.KoriAccessibility
 
 object Notifs {
     const val CH_LISTEN = "kori_listening"
@@ -23,7 +24,7 @@ object Notifs {
     /** Starts an activity. When the app is in the background Android may block it, so also post a tap-to-open notification. */
     fun launch(ctx: Context, i: Intent) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try { ctx.startActivity(i) } catch (_: Exception) { }
+        try { (KoriAccessibility.instance ?: ctx).startActivity(i) } catch (_: Exception) { }
         if (!KoriBus.appInForeground) tapToOpen(ctx, "Kori: tap to continue", i)
     }
 
@@ -38,6 +39,7 @@ object Notifs {
             .setContentTitle(title)
             .setContentIntent(pi)
             .setAutoCancel(true)
+            .setTimeoutAfter(8000)
             .build()
         ctx.getSystemService(NotificationManager::class.java).notify(1000 + (counter++ % 50), n)
     }

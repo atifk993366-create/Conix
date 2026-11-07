@@ -1,6 +1,7 @@
 package com.conix.assistant.core
 
 import android.Manifest
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -13,10 +14,12 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
+import android.os.Bundle
 import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.ContactsContract
 import android.provider.Settings
+import android.telecom.TelecomManager
 import android.telephony.SmsManager
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat
@@ -35,12 +38,17 @@ import java.net.URLEncoder
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-/** Executes actions chosen by the AI brain. Sensitive ones are queued for confirmation + phone unlock. */
-class ActionExecutor(private val ctx: Context, private val brain: Brain) {
+/**
+ * Executes actions. Safety levels: 0 = low (call, WhatsApp draft), 1 = sends a message,
+ * 2 = reads private data. "smooth" mode asks the least; "strict" always confirms + unlocks.
+ */
+class ActionExecutor(private val ctx: Context, private val brain: Brain, private val prefs: Prefs) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var interactive = true
 
-    fun execute(a: JSONObject?): String {
+    fun execute(a: JSONObject?, interactive: Boolean = true): String {
         if (a == null) return ""
+        this.interactive = interactive
         return try {
             when (a.optString("type")) {
                 "open_app" -> openApp(a.optString("name"))
@@ -61,9 +69,13 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
                 "call" -> call(a.optString("to"))
                 "sms" -> sms(a.optString("to"), a.optString("text"))
                 "whatsapp" -> whatsapp(a.optString("to"), a.optString("text"))
+                "wa_reply" -> waReply(a.optString("to"), a.optString("text"))
                 "email" -> email(a)
-                "read_notifications" -> gate("Read notifications", "Kori will read your recent notifications aloud.") { KoriNotificationListener.summary() }
-                "read_sms" -> gate("Read messages", "Kori will read your latest SMS messages.") { readSms() }
+                "read_notifications" -> gate("Read notifications", "Kori will read your recent notifications.", 2) { KoriNotificationListener.summary() }
+                "read_whatsapp" -> gate("Read WhatsApp messages", "Kori will read your new WhatsApp messages.", 2) { KoriNotificationListener.waSummary() }
+                "read_sms" -> gate("Read messages", "Kori will read your latest SMS messages.", 2) { readSms() }
+                "answer_call" -> callControl(true)
+                "reject_call" -> callControl(false)
                 "shop" -> shop(a.optString("query"), a.optString("site"))
                 "remember" -> { brain.addFact(a.optString("text")); "Saved to memory." }
                 else -> ""
@@ -78,22 +90,33 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
     private fun view(url: String) = Notifs.launch(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     private fun granted(p: String) = ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED
 
-    private fun gate(title: String, detail: String, run: () -> String): String {
-        KoriBus.pending = PendingAction(title, detail, run)
-        return "Waiting for your confirmation on the screen."
+    private fun gate(title: String, detail: String, level: Int, run: () -> String): String {
+        val strict = prefs.safety == "strict"
+        if (!strict) {
+            if (level == 0) return run()
+            if (level == 1 && interactive) return run()
+            if (level == 2) {
+                val km = ctx.getSystemService(KeyguardManager::class.java)
+                return if (km.isKeyguardLocked) "Please unlock your phone first." else run()
+            }
+        }
+        KoriBus.pending = PendingAction(title, detail, strict, run)
+        return "Waiting for your confirmation."
     }
 
     // ---------- apps / web ----------
     private fun openApp(name: String): String {
         val pm = ctx.packageManager
+        val blocked = prefs.blockedApps
         val list = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+            .filter { it.activityInfo.packageName !in blocked }
         val n = name.trim().lowercase()
         val hit = list.firstOrNull { it.loadLabel(pm).toString().lowercase() == n }
             ?: list.firstOrNull { it.loadLabel(pm).toString().lowercase().contains(n) }
             ?: return "I couldn't find an app called $name."
         val i = pm.getLaunchIntentForPackage(hit.activityInfo.packageName) ?: return "I couldn't open $name."
         Notifs.launch(ctx, i)
-        return ""
+        return "Opening ${hit.loadLabel(pm)}."
     }
 
     private fun youtube(a: JSONObject): String {
@@ -105,7 +128,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
         view("https://www.youtube.com/results?search_query=" + enc(term) + if (channel) "&sp=EgIQAg%253D%253D" else "")
         if (!(subscribe || like || play)) return ""
         if (KoriAccessibility.instance == null) {
-            return "To tap Subscribe / Like / Play for you, enable Kori in Accessibility settings (Settings > Accessibility control). Until then, tap it yourself."
+            return "To tap Subscribe / Like / Play for you, enable Kori in Accessibility settings. Until then, tap it yourself."
         }
         scope.launch {
             delay(4500)
@@ -116,7 +139,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
                 tryClick { it.contains("like this video") }
             }
         }
-        return "Trying to tap it for you in YouTube..."
+        return "Working on it in YouTube..."
     }
 
     private suspend fun tryClick(match: (String) -> Boolean) {
@@ -185,7 +208,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
         val am = ctx.getSystemService(AudioManager::class.java)
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code))
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
-        return ""
+        return "Done."
     }
 
     private fun volume(dir: String): String {
@@ -197,7 +220,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
             else -> return "Say volume up, down or mute."
         }
         am.adjustStreamVolume(AudioManager.STREAM_MUSIC, d, AudioManager.FLAG_SHOW_UI)
-        return ""
+        return "Done."
     }
 
     private fun flashlight(on: Boolean): String {
@@ -205,7 +228,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
         val id = cm.cameraIdList.firstOrNull { cm.getCameraCharacteristics(it).get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }
             ?: return "This phone has no flashlight."
         cm.setTorchMode(id, on)
-        return ""
+        return if (on) "Flashlight on." else "Flashlight off."
     }
 
     private fun settingsPanel(panel: String): String {
@@ -252,7 +275,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
         val t = to.trim()
         if (t.isNotEmpty() && t.none { it.isLetter() } && t.count { it.isDigit() } >= 7) return t to t.filter { it.isDigit() || it == '+' }
         if (!granted(Manifest.permission.READ_CONTACTS)) {
-            throw IllegalStateException("Contacts permission is not granted. Settings > Grant communication permissions.")
+            throw IllegalStateException("Contacts permission is not granted. Settings > Contacts, calls, SMS.")
         }
         val c = ctx.contentResolver.query(
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
@@ -265,11 +288,17 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
 
     private fun call(to: String): String {
         val (name, number) = lookup(to) ?: return "I couldn't find \"$to\" in your contacts."
-        return gate("Call $name?", "Number: $number") {
+        return gate("Call $name?", "Number: $number", 0) {
             if (granted(Manifest.permission.CALL_PHONE)) {
-                Notifs.launch(ctx, Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))); "Calling $name."
+                try {
+                    ctx.getSystemService(TelecomManager::class.java).placeCall(Uri.parse("tel:$number"), Bundle())
+                } catch (e: Exception) {
+                    Notifs.launch(ctx, Intent(Intent.ACTION_CALL, Uri.parse("tel:$number")))
+                }
+                "Calling $name."
             } else {
-                Notifs.launch(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))); "Opened the dialer for $name (Call permission not granted)."
+                Notifs.launch(ctx, Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")))
+                "Opened the dialer for $name (Call permission not granted)."
             }
         }
     }
@@ -277,7 +306,7 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
     private fun sms(to: String, text: String): String {
         if (text.isBlank()) return "What should the message say?"
         val (name, number) = lookup(to) ?: return "I couldn't find \"$to\" in your contacts."
-        return gate("Send SMS to $name?", "To: $number\n\n\"$text\"") {
+        return gate("Send SMS to $name?", "To: $number\n\"$text\"", 1) {
             if (granted(Manifest.permission.SEND_SMS)) {
                 val sm = if (Build.VERSION.SDK_INT >= 31) ctx.getSystemService(SmsManager::class.java)
                 else @Suppress("DEPRECATION") SmsManager.getDefault()
@@ -291,12 +320,30 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
     }
 
     private fun whatsapp(to: String, text: String): String {
+        if ("com.whatsapp" in prefs.blockedApps) return "WhatsApp is on your excluded apps list."
         val (name, number) = lookup(to) ?: return "I couldn't find \"$to\" in your contacts."
         var digits = number.filter { it.isDigit() }
-        if (digits.length == 10) digits = "91$digits"   // assumes Indian numbers without country code
-        return gate("WhatsApp message to $name?", "To: +$digits\n\n\"$text\"\n\nYou will still tap Send in WhatsApp.") {
-            Notifs.launch(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$digits?text=" + enc(text))))
-            "Opened WhatsApp with your message - tap send."
+        if (digits.length == 10) digits = "91$digits"   // assumes Indian numbers saved without country code
+        return gate("WhatsApp to $name?", "To: +$digits\n\"$text\"", 1) {
+            // Only the standard WhatsApp (never Business or clones)
+            val i = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$digits?text=" + enc(text))).setPackage("com.whatsapp")
+            Notifs.launch(ctx, i)
+            if (prefs.autoSendWa && KoriAccessibility.instance != null) {
+                scope.launch { delay(2800); tryClick { it == "send" || it.startsWith("send ") } }
+                "Sending to $name on WhatsApp..."
+            } else {
+                "WhatsApp opened for $name - tap send."
+            }
+        }
+    }
+
+    private fun waReply(to: String, text: String): String {
+        if (text.isBlank()) return "What should the reply say?"
+        val sender = to.ifBlank { KoriNotificationListener.lastWaSender() ?: "" }
+        if (sender.isBlank()) return "I don't have a recent WhatsApp message to reply to."
+        return gate("Reply to $sender on WhatsApp?", "\"$text\"", 1) {
+            if (KoriNotificationListener.reply(ctx, sender, text)) "Reply sent to $sender."
+            else "I couldn't reply directly (the notification is gone). Open the chat and send it."
         }
     }
 
@@ -315,5 +362,24 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain) {
         val out = ArrayList<String>()
         c.use { while (it.moveToNext() && out.size < 5) out.add(it.getString(0) + ": " + it.getString(1)) }
         return if (out.isEmpty()) "No messages found." else out.joinToString("\n")
+    }
+
+    /** Answer or reject the ringing call (needs the "Answer phone calls" permission). */
+    fun callControl(answer: Boolean): String {
+        if (!granted(Manifest.permission.ANSWER_PHONE_CALLS)) {
+            return "Answer-calls permission is not granted (Settings > Contacts, calls, SMS)."
+        }
+        val tm = ctx.getSystemService(TelecomManager::class.java)
+        return try {
+            if (answer) {
+                tm.acceptRingingCall(); "Answering."
+            } else if (Build.VERSION.SDK_INT >= 28) {
+                tm.endCall(); "Call rejected."
+            } else {
+                "Rejecting calls needs Android 9 or newer."
+            }
+        } catch (e: SecurityException) {
+            "Android blocked call control: ${e.message}"
+        }
     }
 }

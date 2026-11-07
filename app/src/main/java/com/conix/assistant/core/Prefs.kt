@@ -29,6 +29,28 @@ class Prefs(ctx: Context) {
         get() = p.getString("lang_tag", "en-IN") ?: "en-IN"
         set(v) { p.edit().putString("lang_tag", v).apply() }
 
+    /** "smooth" = minimal prompts, "strict" = confirm + phone unlock for sensitive actions. */
+    var safety: String
+        get() = p.getString("safety", "smooth") ?: "smooth"
+        set(v) { p.edit().putString("safety", v).apply() }
+
+    var announceWa: Boolean
+        get() = p.getBoolean("announce_wa", false)
+        set(v) { p.edit().putBoolean("announce_wa", v).apply() }
+
+    var callAssist: Boolean
+        get() = p.getBoolean("call_assist", true)
+        set(v) { p.edit().putBoolean("call_assist", v).apply() }
+
+    var autoSendWa: Boolean
+        get() = p.getBoolean("auto_send_wa", true)
+        set(v) { p.edit().putBoolean("auto_send_wa", v).apply() }
+
+    /** Package names Kori must never open or read notifications from. */
+    var blockedApps: Set<String>
+        get() = p.getStringSet("blocked_apps", null)?.toSet() ?: setOf("com.whatsapp.w4b")
+        set(v) { p.edit().putStringSet("blocked_apps", HashSet(v)).apply() }
+
     companion object {
         fun defaultModel(provider: String) = if (provider == "claude") "claude-haiku-5-5" else "gemini-3.5-flash"
     }
