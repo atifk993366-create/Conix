@@ -46,13 +46,31 @@ class Prefs(ctx: Context) {
         get() = p.getBoolean("auto_send_wa", true)
         set(v) { p.edit().putBoolean("auto_send_wa", v).apply() }
 
+    var ownerName: String
+        get() = p.getString("owner_name", "") ?: ""
+        set(v) { p.edit().putString("owner_name", v).apply() }
+
+    var awayUntil: Long
+        get() = p.getLong("away_until", 0L)
+        set(v) { p.edit().putLong("away_until", v).apply() }
+
+    /** When true, calls and questions work by voice even while the phone is locked. */
+    var lockScreenMode: Boolean
+        get() = p.getBoolean("lock_screen_mode", false)
+        set(v) { p.edit().putBoolean("lock_screen_mode", v).apply() }
+
+    /** Text callers whose message Kori could not hear. */
+    var awaySms: Boolean
+        get() = p.getBoolean("away_sms", true)
+        set(v) { p.edit().putBoolean("away_sms", v).apply() }
+
     /** Package names Kori must never open or read notifications from. */
     var blockedApps: Set<String>
         get() = p.getStringSet("blocked_apps", null)?.toSet() ?: setOf("com.whatsapp.w4b")
         set(v) { p.edit().putStringSet("blocked_apps", HashSet(v)).apply() }
 
     companion object {
-        fun defaultModel(provider: String) = if (provider == "claude") "claude-haiku-5-5" else "gemini-3.5-flash"
+        fun defaultModel(provider: String) = if (provider == "claude") "claude-haiku-5-5" else "gemini-3.8-flash"
     }
 }
 

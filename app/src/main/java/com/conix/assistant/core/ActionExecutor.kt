@@ -24,10 +24,12 @@ import android.telephony.SmsManager
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat
 import com.conix.assistant.KoriBus
+import com.conix.assistant.MainActivity
 import com.conix.assistant.PendingAction
 import com.conix.assistant.access.KoriAccessibility
 import com.conix.assistant.brain.Brain
 import com.conix.assistant.notif.KoriNotificationListener
+import com.conix.assistant.wake.WakeService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,7 +44,12 @@ import java.time.ZoneId
  * Executes actions. Safety levels: 0 = low (call, WhatsApp draft), 1 = sends a message,
  * 2 = reads private data. "smooth" mode asks the least; "strict" always confirms + unlocks.
  */
-class ActionExecutor(private val ctx: Context, private val brain: Brain, private val prefs: Prefs) {
+class ActionExecutor(
+    private val ctx: Context,
+    private val brain: Brain,
+    private val prefs: Prefs,
+    private val secrets: SecretStore
+) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var interactive = true
 
@@ -75,6 +82,9 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain, private
                 "read_whatsapp" -> gate("Read WhatsApp messages", "Kori will read your new WhatsApp messages.", 2) { KoriNotificationListener.waSummary() }
                 "read_sms" -> gate("Read messages", "Kori will read your latest SMS messages.", 2) { readSms() }
                 "answer_call" -> callControl(true)
+                "camera_identify" -> cameraIdentify(a.optString("question"))
+                "away_on" -> awayOn(a.optInt("minutes", 10))
+                "away_off" -> awayOff()
                 "reject_call" -> callControl(false)
                 "shop" -> shop(a.optString("query"), a.optString("site"))
                 "remember" -> { brain.addFact(a.optString("text")); "Saved to memory." }
@@ -362,6 +372,34 @@ class ActionExecutor(private val ctx: Context, private val brain: Brain, private
         val out = ArrayList<String>()
         c.use { while (it.moveToNext() && out.size < 5) out.add(it.getString(0) + ": " + it.getString(1)) }
         return if (out.isEmpty()) "No messages found." else out.joinToString("\n")
+    }
+
+    private fun cameraIdentify(question: String): String {
+        KoriBus.cameraRequest = question.ifBlank { "What is this thing in front of me?" }
+        Notifs.launch(ctx, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
+        return "Opening the camera..."
+    }
+
+    private fun awayOn(minutes: Int): String {
+        if (!granted(Manifest.permission.ANSWER_PHONE_CALLS)) {
+            return "Away mode needs the Answer-calls permission (Settings > Contacts, calls, SMS)."
+        }
+        val min = minutes.coerceIn(1, 120)
+        val until = System.currentTimeMillis() + min * 60_000L
+        prefs.awayUntil = until
+        KoriBus.awayUntil = until
+        try {
+            ContextCompat.startForegroundService(ctx, Intent(ctx, WakeService::class.java))
+        } catch (e: Exception) {
+            return "Away mode is set, but open Kori once and tap Start listening so I can hear calls."
+        }
+        return "Away mode on for $min minutes. I'll answer calls and take messages."
+    }
+
+    private fun awayOff(): String {
+        prefs.awayUntil = 0L
+        KoriBus.awayUntil = 0L
+        return "Welcome back. " + CallNotes.summary(secrets)
     }
 
     /** Answer or reject the ringing call (needs the "Answer phone calls" permission). */

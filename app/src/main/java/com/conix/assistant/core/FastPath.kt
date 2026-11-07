@@ -19,6 +19,21 @@ object FastPath {
         if (t.isEmpty()) return null
         val q = t.lowercase()
 
+        // camera: "what is this thing in front of me"
+        if (Regex("^(?:what(?:'s| is| are)?\\s+(?:this|that|these)(?:\\s+(?:thing|object|item))?(?:\\s+in front of me)?|what am i looking at|identify\\s+(?:this|that)(?:\\s+(?:thing|object))?|scan this|(?:ye|yeh)\\s+kya\\s+hai)$", I).containsMatchIn(t))
+            return act("camera_identify", "question" to "What is this thing in front of me?") to ""
+        Regex("^what(?:'s| is)?\\s+(?:this|that)\\s+(.+?)\\s+in front of me$", I).find(t)?.let {
+            return act("camera_identify", "question" to "What is this ${it.groupValues[1]} in front of me?") to ""
+        }
+
+        // away mode
+        Regex("^(?:i(?:'m| am)|main)\\s+(?:going to be\\s+)?(?:away|unavailable|busy)(?:\\s+for\\s+(\\d+)\\s*min\\w*)?$|^away mode(?:\\s+on)?(?:\\s+for\\s+(\\d+)\\s*min\\w*)?$", I).find(t)?.let { r ->
+            val m = (r.groupValues[1].ifEmpty { r.groupValues[2] }).ifEmpty { "10" }.toInt()
+            return act("away_on", "minutes" to m) to ""
+        }
+        if (Regex("^(?:i(?:'m| am)\\s+back|main\\s+(?:wapas\\s+)?aa\\s+gaya|away mode\\s+off)$", I).containsMatchIn(t))
+            return act("away_off") to ""
+
         // call control
         if (Regex("^(?:answer|pick up|receive|accept)(?:\\s+(?:the|this))?\\s+call$|^call\\s+(?:utha|uthao|utha lo)$", I).containsMatchIn(t))
             return act("answer_call") to ""
