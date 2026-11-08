@@ -22,9 +22,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.ContactsContract
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.telephony.SmsManager
@@ -38,6 +35,8 @@ import com.conix.assistant.core.CallNotes
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.core.Notifs
 import com.conix.assistant.notif.KoriNotificationListener
+import com.conix.assistant.speech.Ears
+import com.conix.assistant.speech.EarsFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,18 +47,16 @@ import kotlinx.coroutines.launch
  * "Hey Kori" listener (beta). Reacts only to phrases starting with the wake word. Also announces
  * incoming calls, can answer them in Away mode and take a message, and reads WhatsApp messages.
  */
-class WakeService : Service(), RecognitionListener {
+class WakeService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private lateinit var core: KoriCore
-    private var sr: SpeechRecognizer? = null
+    private var ears: Ears? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var wl: PowerManager.WakeLock? = null
-    private var stopAt = 0L
     private var awaiting = false
     private var busy = false
-    private var onDevice = true
 
     private var awaitingConfirm = false
     private var confirmUntil = 0L
@@ -78,7 +75,7 @@ class WakeService : Service(), RecognitionListener {
 
     private val I = RegexOption.IGNORE_CASE
     private val wakeRe = Regex(
-        "^\\s*(?:(?:hey|hi|hello|ok|okay)\\s+)?(?:kori|corey|cory|kauri|khori)\\b[\\s,.!]*", I
+        "^\\s*(?:(?:hey|hi|hello|ok|okay|हे|हेलो|ओके)\\s+)?(?:(?:kori|corey|cory|kauri|khori)\\b|कोरी|कौरी|कोरि)[\\s,.!]*", I
     )
     private val yesRe = Regex("\\b(yes|yeah|yep|yup|confirm|send|haan|han|ha|ok|okay|kar do|karo)\\b|हाँ|हां|ହଁ", I)
     private val answerRe = Regex("\\b(answer|pick|receive|accept|utha|uthao|uthalo|yes|haan)\\b|उठा|रिसीव", I)
@@ -128,13 +125,11 @@ class WakeService : Service(), RecognitionListener {
             stopSelf()
             return START_NOT_STICKY
         }
-        val now = System.currentTimeMillis()
-        val awayLeft = core.prefs.awayUntil - now
-        stopAt = now + maxOf(core.prefs.wakeMinutes * 60_000L, if (awayLeft > 0) awayLeft + 120_000L else 0L)
         try {
-            wl?.let { if (it.isHeld) it.release() }
-            wl = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "kori:listen")
-                .apply { acquire(stopAt - now + 60_000L) }
+            if (wl == null) {
+                wl = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "kori:listen")
+                    .apply { acquire() }   // no time limit: you stop Kori yourself
+            }
         } catch (_: Exception) { }
         KoriBus.wakeActive = true
         busy = false
@@ -149,7 +144,7 @@ class WakeService : Service(), RecognitionListener {
             } catch (_: Exception) { }
         }
         startListening()
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun buildNotification(): Notification {
@@ -160,7 +155,7 @@ class WakeService : Service(), RecognitionListener {
         return Notification.Builder(this, Notifs.CH_LISTEN)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle("Kori is listening for \"Hey Kori\"")
-            .setContentText("Microphone is on. Tap Stop to turn it off.")
+            .setContentText("Using its own microphone. Tap Stop to turn it off.")
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(Notification.Action.Builder(Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel), "Stop", stop).build())
@@ -171,33 +166,23 @@ class WakeService : Service(), RecognitionListener {
 
     private fun startListening() {
         if (busy) return
-        if (System.currentTimeMillis() > stopAt) { stopSelf(); return }
         beginRecognition()
     }
 
     private fun beginRecognition() {
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            KoriBus.messages.add(ChatLine("conix", "Speech recognition is not available on this phone."))
-            stopSelf(); return
+        var e = ears
+        if (e == null) {
+            e = EarsFactory.create(this, core.prefs, core.prefs.langTag)
+            e.onFatal = { msg ->
+                KoriBus.messages.add(ChatLine("conix", msg))
+                stopSelf()
+            }
+            ears = e
         }
-        sr?.destroy()
-        val r = if (Build.VERSION.SDK_INT >= 33 && onDevice && SpeechRecognizer.isOnDeviceRecognitionAvailable(this))
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(this) else SpeechRecognizer.createSpeechRecognizer(this)
-        r.setRecognitionListener(this)
-        sr = r
-        r.startListening(
-            Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentLang().tag)
-                .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-                .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
-        )
+        e.listen(if (awayCall) 8000L else 0L) { heard -> onHeard(heard) }
     }
 
-    private fun stopListening() {
-        sr?.destroy()
-        sr = null
-    }
+    private fun stopListening() { ears?.cancel() }
 
     /** [call] = true plays the voice through the in-call audio path (heard by the caller when on speaker). */
     private fun say(text: String, call: Boolean = false, then: () -> Unit) {
@@ -356,8 +341,7 @@ class WakeService : Service(), RecognitionListener {
     }
 
     // ---------- recognition results ----------
-    override fun onResults(results: Bundle?) {
-        val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().trim()
+    private fun onHeard(heard: String) {
         if (awayCall) { handleAwayResult(heard); return }
         if (heard.isEmpty()) { handler.postDelayed({ startListening() }, 300); return }
         val h = heard.lowercase()
@@ -431,29 +415,12 @@ class WakeService : Service(), RecognitionListener {
         }
     }
 
-    override fun onError(error: Int) {
-        if (awayCall) { handleAwayResult(""); return }
-        if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) { stopSelf(); return }
-        if (error == 12 || error == 13) onDevice = false   // language not supported on-device
-        if (busy) return
-        val delay = if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 1200L else 400L
-        handler.postDelayed({ startListening() }, delay)
-    }
-
-    override fun onReadyForSpeech(params: Bundle?) {}
-    override fun onBeginningOfSpeech() {}
-    override fun onRmsChanged(rmsdB: Float) {}
-    override fun onBufferReceived(buffer: ByteArray?) {}
-    override fun onEndOfSpeech() {}
-    override fun onPartialResults(partialResults: Bundle?) {}
-    override fun onEvent(eventType: Int, params: Bundle?) {}
-
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         KoriNotificationListener.onWhatsApp = null
         if (receiverRegistered) { try { unregisterReceiver(phoneReceiver) } catch (_: Exception) { } }
         try { wl?.let { if (it.isHeld) it.release() } } catch (_: Exception) { }
-        sr?.destroy()
+        ears?.release()
         tts?.stop(); tts?.shutdown()
         scope.cancel()
         KoriBus.wakeActive = false
