@@ -5,7 +5,7 @@ import org.json.JSONObject
 /** Instant local parsing of common commands, so they run without waiting for the AI. */
 object FastPath {
     private val I = RegexOption.IGNORE_CASE
-    private val wake = Regex("^\\s*(?:(?:hey|hi|hello|ok|okay)\\s+)?(?:kori|corey|cory|kauri|khori)\\b[\\s,.!]*", I)
+    private val wake = Regex("^\\s*(?:(?:hey|hi|hello|ok|okay|हे|हेलो|ओके)\\s+)?(?:(?:kori|corey|cory|kauri|khori)\\b|कोरी|कौरी|कोरि)[\\s,.!]*", I)
     private val verbRe = Regex("(?:search(?:\\s+for)?|find|look\\s+for|play)\\s+(?:a\\s+|an\\s+|the\\s+|some\\s+)?(.+)", I)
 
     private fun act(type: String, vararg kv: Pair<String, Any>): JSONObject {
@@ -13,6 +13,9 @@ object FastPath {
         for ((k, v) in kv) o.put(k, v)
         return o
     }
+
+    /** The user text without the wake word. */
+    fun clean(input: String): String = input.trim().replace(wake, "").trim()
 
     fun parse(input: String): Pair<JSONObject, String>? {
         val t = input.trim().replace(wake, "").trim().trimEnd('.', '!', '?', ' ')
@@ -33,6 +36,10 @@ object FastPath {
         }
         if (Regex("^(?:i(?:'m| am)\\s+back|main\\s+(?:wapas\\s+)?aa\\s+gaya|away mode\\s+off)$", I).containsMatchIn(t))
             return act("away_off") to ""
+
+        // game break: Do Not Disturb for 2 minutes (does not play the game)
+        if (Regex("^(?:game (?:break|mode)|gaming mode|(?:i(?:'m| am) )?going to the toilet|main toilet ja\\w*)(?:\\s+on)?$", I).containsMatchIn(t))
+            return act("game_break", "seconds" to 120) to ""
 
         // call control
         if (Regex("^(?:answer|pick up|receive|accept)(?:\\s+(?:the|this))?\\s+call$|^call\\s+(?:utha|uthao|utha lo)$", I).containsMatchIn(t))

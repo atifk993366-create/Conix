@@ -13,6 +13,7 @@ class KoriCore(ctx: Context) {
     val prefs = Prefs(app)
     val secrets = SecretStore(app)
     val brain = Brain(prefs, secrets)
+    val training = TrainingLog(app, prefs)
     private val exec = ActionExecutor(app, brain, prefs, secrets)
     private val router = CommandRouter(app)
 
@@ -39,9 +40,11 @@ class KoriCore(ctx: Context) {
 
     /** [typed] = true when the user typed it (or tapped), false when it came from speech recognition. */
     suspend fun handle(text: String, typed: Boolean = true): String {
+        val clean = FastPath.clean(text)
         val fp = FastPath.parse(text)
         if (fp != null) {
             lockBlock(fp.first.optString("type"))?.let { return it }
+            training.add(clean, fp.second, fp.first, "fastpath")
             val fb = exec.execute(fp.first, typed)
             return listOf(fp.second, fb).filter { it.isNotBlank() }.joinToString("\n").ifBlank { "Done." }
         }
@@ -57,13 +60,15 @@ class KoriCore(ctx: Context) {
                 KoriBus.messages.add(ChatLine("conix", "Checking the web..."))
                 val q = r.action?.optString("query").orEmpty().ifBlank { text }
                 val rr = brain.ask(q, true)
+                training.add(clean, rr.reply, null, rr.provider.ifBlank { r.provider })
                 return format(rr.reply, "", rr.sources)
             }
             if (r.action != null) lockBlock(type)?.let { return it }
+            training.add(clean, r.reply, r.action, r.provider)
             val fb = exec.execute(r.action, typed)
             return format(r.reply, fb, r.sources)
         } catch (e: Exception) {
-            return router.handle(text) + "\n\n(AI brain unavailable: ${e.message?.take(160)}. Used offline commands.)"
+            return router.handle(text) + "\n\n(AI brain unavailable: ${e.message?.take(200)}. Used offline commands.)"
         }
     }
 
@@ -73,7 +78,7 @@ class KoriCore(ctx: Context) {
             val r = brain.describeImage(jpeg, question)
             format(r.reply, "", r.sources)
         } catch (e: Exception) {
-            "Couldn't analyze the photo: ${e.message?.take(160)}"
+            "Couldn't analyze the photo: ${e.message?.take(240)}\n\nTip: add a second free provider (Groq or OpenRouter) in Settings; Kori switches automatically when one is out of quota."
         }
     }
 

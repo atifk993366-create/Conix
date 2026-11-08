@@ -2,6 +2,7 @@ package com.conix.assistant.core
 
 import android.Manifest
 import android.app.KeyguardManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -85,6 +86,7 @@ class ActionExecutor(
                 "camera_identify" -> cameraIdentify(a.optString("question"))
                 "away_on" -> awayOn(a.optInt("minutes", 10))
                 "away_off" -> awayOff()
+                "game_break" -> gameBreak(a.optInt("seconds", 120))
                 "reject_call" -> callControl(false)
                 "shop" -> shop(a.optString("query"), a.optString("site"))
                 "remember" -> { brain.addFact(a.optString("text")); "Saved to memory." }
@@ -394,6 +396,24 @@ class ActionExecutor(
             return "Away mode is set, but open Kori once and tap Start listening so I can hear calls."
         }
         return "Away mode on for $min minutes. I'll answer calls and take messages."
+    }
+
+    /** Silences interruptions (Do Not Disturb) for a short time, then switches back. It does not play any game. */
+    private fun gameBreak(seconds: Int): String {
+        val nm = ctx.getSystemService(NotificationManager::class.java)
+        if (!nm.isNotificationPolicyAccessGranted) {
+            Notifs.launch(ctx, Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+            return "Allow Do Not Disturb access for Kori, then say it again."
+        }
+        val secs = seconds.coerceIn(10, 600)
+        val old = nm.currentInterruptionFilter
+        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+        scope.launch {
+            delay(secs * 1000L)
+            nm.setInterruptionFilter(old)
+            KoriBus.messages.add(com.conix.assistant.ChatLine("conix", "Game break is over. Do Not Disturb is off."))
+        }
+        return "Do Not Disturb is on for $secs seconds. I turn it off by myself."
     }
 
     private fun awayOff(): String {

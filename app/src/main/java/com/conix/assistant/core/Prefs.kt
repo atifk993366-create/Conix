@@ -3,6 +3,7 @@ package com.conix.assistant.core
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import com.conix.assistant.brain.Providers
 import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -13,13 +14,21 @@ import javax.crypto.spec.GCMParameterSpec
 class Prefs(ctx: Context) {
     private val p = ctx.getSharedPreferences("kori_prefs", Context.MODE_PRIVATE)
 
+    /** Primary AI provider; the others with keys are used automatically as fallbacks. */
     var provider: String
         get() = p.getString("provider", "gemini") ?: "gemini"
         set(v) { p.edit().putString("provider", v).apply() }
 
+    fun modelOf(id: String): String =
+        p.getString("model_$id", null)?.takeIf { it.isNotBlank() } ?: Providers.byId(id).textModel
+    fun setModelOf(id: String, v: String) { p.edit().putString("model_$id", v.trim()).apply() }
+    fun visionOf(id: String): String =
+        p.getString("vmodel_$id", null)?.takeIf { it.isNotBlank() } ?: Providers.byId(id).visionModel
+    fun setVisionOf(id: String, v: String) { p.edit().putString("vmodel_$id", v.trim()).apply() }
+
     var model: String
-        get() = p.getString("model_$provider", null) ?: defaultModel(provider)
-        set(v) { p.edit().putString("model_$provider", v.trim()).apply() }
+        get() = modelOf(provider)
+        set(v) { setModelOf(provider, v) }
 
     var wakeMinutes: Int
         get() = p.getInt("wake_minutes", 30)
@@ -28,6 +37,16 @@ class Prefs(ctx: Context) {
     var langTag: String
         get() = p.getString("lang_tag", "en-IN") ?: "en-IN"
         set(v) { p.edit().putString("lang_tag", v).apply() }
+
+    /** "kori" = offline Vosk engine on Kori's own microphone, "google" = Android/Google recognizer. */
+    var engine: String
+        get() = p.getString("engine", "kori") ?: "kori"
+        set(v) { p.edit().putString("engine", v).apply() }
+
+    /** Save commands and answers as training examples for Kori's own model. */
+    var trainingLog: Boolean
+        get() = p.getBoolean("training_log", true)
+        set(v) { p.edit().putBoolean("training_log", v).apply() }
 
     /** "smooth" = minimal prompts, "strict" = confirm + phone unlock for sensitive actions. */
     var safety: String
@@ -50,6 +69,7 @@ class Prefs(ctx: Context) {
         get() = p.getString("owner_name", "") ?: ""
         set(v) { p.edit().putString("owner_name", v).apply() }
 
+    /** Away mode end time in millis; Long.MAX_VALUE means "until I stop it". */
     var awayUntil: Long
         get() = p.getLong("away_until", 0L)
         set(v) { p.edit().putLong("away_until", v).apply() }
@@ -68,10 +88,6 @@ class Prefs(ctx: Context) {
     var blockedApps: Set<String>
         get() = p.getStringSet("blocked_apps", null)?.toSet() ?: setOf("com.whatsapp.w4b")
         set(v) { p.edit().putStringSet("blocked_apps", HashSet(v)).apply() }
-
-    companion object {
-        fun defaultModel(provider: String) = if (provider == "claude") "claude-haiku-5-5" else "gemini-3.8-flash"
-    }
 }
 
 /** Stores secrets (API keys, memory) encrypted with an Android Keystore AES-GCM key. */
