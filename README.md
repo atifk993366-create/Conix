@@ -1,12 +1,7 @@
-# CONIX AI - Phase 1 (v0.2.0)
+# Kori AI (v0.7.0)
 
-Includes: CONIX branding (icon + splash), Home / Voice / Chat / Settings screens,
-permission requests (mic, notifications), English/Hindi/Odia language selector,
-basic commands, JVM 17 fix, GitHub Actions APK build.
+Upload every file and folder to your GitHub repo (keep paths, include .github), then run the
+"Build Kori APK" workflow and install app-debug.apk.
 
-NOT included yet: voice security (Phase 2), wake word (Phase 3), AI brain (Phase 5).
-
-## Build
-1. Extract the zip, upload ALL files/folders to your GitHub repo (keep folder paths, include .github).
-2. Actions tab -> "Build CONIX APK" -> Run workflow.
-3. Download artifact `CONIX-debug-apk`, extract, install app-debug.apk.
+New in 0.7: multiple free AI providers with automatic fallback, Kori's own offline microphone
+(Vosk) with no time limit, training-data export and a Colab training script (training/).
