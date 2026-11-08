@@ -12,8 +12,8 @@ android {
         applicationId = "com.conix.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.6.1"
+        versionCode = 10
+        versionName = "0.7.0"
     }
 
     compileOptions {
@@ -36,6 +36,8 @@ dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.2")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("net.java.dev.jna:jna:5.13.0@aar")
+    implementation("com.alphacephei:vosk-android:0.3.47")
     implementation("androidx.camera:camera-core:1.4.1")
     implementation("androidx.camera:camera-camera2:1.4.1")
     implementation("androidx.camera:camera-lifecycle:1.4.1")
