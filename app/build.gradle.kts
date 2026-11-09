@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = (project.findProperty("verCode") as String?)?.toIntOrNull() ?: 11
-        versionName = "0.8.0"
+        versionName = "0.8.1"
     }
 
     compileOptions {
