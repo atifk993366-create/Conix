@@ -96,6 +96,16 @@ class VoiceVault(ctx: Context) {
         return c.doFinal(b, 12, b.size - 12)
     }
 
+    fun exportRaw(): Map<String, ByteArray> {
+        val out = HashMap<String, ByteArray>()
+        dir.listFiles()?.forEach { f -> try { out[f.name] = decrypt(f.readBytes()) } catch (_: Exception) { } }
+        return out
+    }
+
+    fun importRaw(m: Map<String, ByteArray>) {
+        for ((n, b) in m) File(dir, n).writeBytes(encrypt(b))
+    }
+
     companion object {
         private const val ALIAS = "conix_voice_key"
 
