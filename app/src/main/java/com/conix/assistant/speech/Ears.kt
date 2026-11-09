@@ -14,6 +14,7 @@ import android.os.SystemClock
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import com.conix.assistant.core.BackupManager
 import com.conix.assistant.core.Prefs
 import org.json.JSONObject
 import org.vosk.Model
@@ -56,7 +57,19 @@ object ModelManager {
 
     fun supported(tag: String) = name(tag) != null
 
-    fun dir(ctx: Context, tag: String): File? = name(tag)?.let { File(File(ctx.filesDir, "vosk"), it) }
+    private fun internalRoot(ctx: Context) = File(ctx.filesDir, "vosk")
+    private fun externalRoot() = File(BackupManager.dir(), "models/vosk")
+
+    /** Where models are stored: the shared /Kori folder when allowed (survives reinstalls), else app storage. */
+    private fun defaultRoot(ctx: Context): File = if (BackupManager.hasAccess()) externalRoot() else internalRoot(ctx)
+
+    fun dir(ctx: Context, tag: String): File? {
+        val n = name(tag) ?: return null
+        val candidates = listOf(File(externalRoot(), n), File(internalRoot(ctx), n))
+        return candidates.firstOrNull { BackupManager.hasAccess() && it.path.startsWith(externalRoot().path) && File(it, "am").isDirectory }
+            ?: candidates.firstOrNull { File(it, "am").isDirectory && !it.path.startsWith(externalRoot().path) }
+            ?: File(defaultRoot(ctx), n)
+    }
 
     fun isReady(ctx: Context, tag: String): Boolean = dir(ctx, tag)?.let { File(it, "am").isDirectory } ?: false
 
@@ -66,7 +79,7 @@ object ModelManager {
     /** Blocking. Returns "" on success or an error message. */
     fun download(ctx: Context, tag: String, onProgress: (Int) -> Unit): String {
         val n = name(tag) ?: return "No offline voice model for this language."
-        val root = File(ctx.filesDir, "vosk").apply { mkdirs() }
+        val root = defaultRoot(ctx).apply { mkdirs() }
         val zip = File(root, "$n.zip")
         return try {
             val c = URL("https://alphacephei.com/vosk/models/$n.zip").openConnection() as HttpURLConnection
