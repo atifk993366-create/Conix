@@ -12,8 +12,8 @@ android {
         applicationId = "com.conix.assistant"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.7.0"
+        versionCode = (project.findProperty("verCode") as String?)?.toIntOrNull() ?: 11
+        versionName = "0.8.0"
     }
 
     compileOptions {
@@ -21,6 +21,19 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
+    signingConfigs {
+        create("kori") {
+            storeFile = file("kori.keystore")
+            storeType = "pkcs12"
+            storePassword = "kori-personal"
+            keyAlias = "kori"
+            keyPassword = "kori-personal"
+        }
+    }
+    buildTypes {
+        getByName("debug") { signingConfig = signingConfigs.getByName("kori") }
+    }
 
     buildFeatures { compose = true }
 }
