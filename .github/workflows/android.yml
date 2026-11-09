@@ -23,7 +23,7 @@ jobs:
           curl -fL --retry 3 -o app/src/main/assets/speaker_model.onnx "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"
           ls -l app/src/main/assets
       - name: Build debug APK
-        run: gradle assembleDebug
+        run: gradle assembleDebug -PverCode=$((1000 + ${{ github.run_number }}))
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
