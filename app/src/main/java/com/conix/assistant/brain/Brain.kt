@@ -43,7 +43,8 @@ data class BrainResult(
     val reply: String,
     val action: JSONObject?,
     val sources: List<Pair<String, String>> = emptyList(),
-    val provider: String = ""
+    val provider: String = "",
+    val more: List<JSONObject> = emptyList()
 )
 
 class Brain(private val prefs: Prefs, private val secrets: SecretStore) {
@@ -100,6 +101,11 @@ class Brain(private val prefs: Prefs, private val secrets: SecretStore) {
         over { p, k -> completeOn(p, k, system, user) }
     }
 
+    /** Long answers such as code edits (more tokens, longer wait). */
+    suspend fun completeLong(system: String, user: String): String = withContext(Dispatchers.IO) {
+        over { p, k -> completeOn(p, k, system, user, 6000, 120000) }
+    }
+
     suspend fun describeImage(jpeg: ByteArray, question: String): BrainResult = withContext(Dispatchers.IO) {
         val b64 = Base64.encodeToString(jpeg, Base64.NO_WRAP)
         val prompt = "You are Kori. The user points their phone camera at something and asks: \"$question\". " +
@@ -150,6 +156,7 @@ Actions:
 {"type":"away_on","minutes":10}
 {"type":"away_off"}
 {"type":"game_break","seconds":120}
+{"type":"incognito"}   (new incognito tab in Chrome)
 {"type":"open_app","name":"WhatsApp"}
 {"type":"open_url","url":"https://..."}
 {"type":"web_search","query":"..."}
@@ -174,7 +181,7 @@ Actions:
 {"type":"read_sms"}
 {"type":"shop","query":"...","site":"amazon|flipkart|meesho|all"}
 {"type":"remember","text":"a fact the user asked you to remember"}
-Rules: never invent phone numbers or addresses. The app handles confirmation and safety itself, so just emit the action. Do not claim something is done; say you are doing it. Use camera_identify when the user asks what something in front of them is.
+Rules: never invent phone numbers or addresses. The app handles confirmation and safety itself, so just emit the action. Do not claim something is done; say you are doing it. Use camera_identify when the user asks what something in front of them is. For several steps ("open A, then B, then C") use "actions": [ ... ] instead of "action"; the steps run one after another.
 """.trimIndent()
     }
 
@@ -204,19 +211,25 @@ Rules: never invent phone numbers or addresses. The app handles confirmation and
             }
         }
         val r = parse(text)
-        return BrainResult(r.reply, r.action, emptyList(), p.id)
+        return BrainResult(r.reply, r.action, emptyList(), p.id, r.more)
     }
 
-    private fun completeOn(p: Provider, key: String, system: String, user: String): String = when (p.id) {
+    private fun completeOn(
+        p: Provider, key: String, system: String, user: String, maxTokens: Int = 900, readMs: Int = 25000
+    ): String = when (p.id) {
         "gemini" -> {
             val body = JSONObject().put("systemInstruction", sysObj(system)).put("contents", JSONArray().put(turn("user", user)))
-            geminiCall(key, body, 25000, prefs.modelOf("gemini"), true).first
+                .put("generationConfig", JSONObject().put("maxOutputTokens", maxTokens))
+            geminiCall(key, body, readMs, prefs.modelOf("gemini"), true).first
         }
-        "claude" -> claudeCall(key, prefs.modelOf("claude"), system, JSONArray().put(JSONObject().put("role", "user").put("content", user)))
+        "claude" -> claudeCall(
+            key, prefs.modelOf("claude"), system,
+            JSONArray().put(JSONObject().put("role", "user").put("content", user)), maxTokens, readMs
+        )
         else -> {
             val msgs = JSONArray().put(JSONObject().put("role", "system").put("content", system))
                 .put(JSONObject().put("role", "user").put("content", user))
-            openAiCall(p, key, prefs.modelOf(p.id), msgs)
+            openAiCall(p, key, prefs.modelOf(p.id), msgs, readMs, maxTokens)
         }
     }
 
@@ -338,12 +351,12 @@ Rules: never invent phone numbers or addresses. The app handles confirmation and
         return Pair(sb.toString().trim(), sources)
     }
 
-    private fun claudeCall(key: String, model: String, system: String, messages: JSONArray): String {
-        val body = JSONObject().put("model", model).put("max_tokens", 900)
+    private fun claudeCall(key: String, model: String, system: String, messages: JSONArray, maxTokens: Int = 900, readMs: Int = 30000): String {
+        val body = JSONObject().put("model", model).put("max_tokens", maxTokens)
             .put("system", system).put("messages", messages)
         val (code, resp) = post(
             "https://api.anthropic.com/v1/messages",
-            mapOf("x-api-key" to key, "anthropic-version" to "2023-06-01"), body.toString(), 30000
+            mapOf("x-api-key" to key, "anthropic-version" to "2023-06-01"), body.toString(), readMs
         )
         if (code !in 200..299) throw IllegalStateException("HTTP $code ${errMsg(resp)}")
         val arr = JSONObject(resp).optJSONArray("content") ?: throw IllegalStateException("Empty response from model")
@@ -353,9 +366,9 @@ Rules: never invent phone numbers or addresses. The app handles confirmation and
     }
 
     /** Works for Groq, Cerebras, OpenRouter, Mistral, GitHub Models (OpenAI-compatible APIs). */
-    private fun openAiCall(p: Provider, key: String, model: String, messages: JSONArray, readMs: Int = 25000): String {
+    private fun openAiCall(p: Provider, key: String, model: String, messages: JSONArray, readMs: Int = 25000, maxTokens: Int = 900): String {
         val body = JSONObject().put("model", model).put("messages", messages)
-            .put("temperature", 0.3).put("max_tokens", 900)
+            .put("temperature", 0.3).put("max_tokens", maxTokens)
         val (code, resp) = post(p.base + "/chat/completions", mapOf("Authorization" to "Bearer $key"), body.toString(), readMs)
         if (code !in 200..299) throw IllegalStateException("HTTP $code ${errMsg(resp)}")
         val content = JSONObject(resp).optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.opt("content")
@@ -369,7 +382,13 @@ Rules: never invent phone numbers or addresses. The app handles confirmation and
         if (s >= 0 && e > s) {
             try {
                 val o = JSONObject(t.substring(s, e + 1))
-                return BrainResult(o.optString("reply", ""), o.optJSONObject("action"))
+                val list = ArrayList<JSONObject>()
+                o.optJSONObject("action")?.let { list.add(it) }
+                for (key in listOf("action", "actions")) {
+                    val arr = o.optJSONArray(key) ?: continue
+                    for (i in 0 until arr.length()) arr.optJSONObject(i)?.let { list.add(it) }
+                }
+                return BrainResult(o.optString("reply", ""), list.firstOrNull(), emptyList(), "", list.drop(1))
             } catch (_: Exception) { }
         }
         return BrainResult(t, null)
