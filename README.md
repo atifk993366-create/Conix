@@ -1,7 +1,7 @@
-# Kori AI (v0.7.0)
+# Kori AI (v0.8.0)
 
-Upload every file and folder to your GitHub repo (keep paths, include .github), then run the
-"Build Kori APK" workflow and install app-debug.apk.
+Upload every file and folder to your PRIVATE GitHub repo (keep paths, include .github and app/kori.keystore),
+run the "Build Kori APK" workflow, install app-debug.apk.
 
-New in 0.7: multiple free AI providers with automatic fallback, Kori's own offline microphone
-(Vosk) with no time limit, training-data export and a Colab training script (training/).
+Builds are now signed with the same key (app/kori.keystore), so updates install over the old app and keep your data.
+Do not make this repo public: the signing key is inside it.
