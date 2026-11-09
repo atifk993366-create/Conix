@@ -14,6 +14,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.drawable.Icon
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +23,10 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.ContactsContract
+import android.provider.Settings
+import android.view.Gravity
+import android.view.View
+import android.view.WindowManager
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.telephony.SmsManager
@@ -32,6 +37,8 @@ import com.conix.assistant.ChatLine
 import com.conix.assistant.KoriBus
 import com.conix.assistant.MainActivity
 import com.conix.assistant.core.CallNotes
+import com.conix.assistant.dialer.AwayWatch
+import com.conix.assistant.dialer.CallRegistry
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.core.Notifs
 import com.conix.assistant.notif.KoriNotificationListener
@@ -65,6 +72,9 @@ class WakeService : Service() {
     private var ringing = false
     private var ringNumber: String? = null
     private var receiverRegistered = false
+    private var anchor: View? = null
+    private var savedVol = -1
+    private var savedStream = AudioManager.STREAM_MUSIC
 
     // Away mode call screening
     private var awayCall = false
@@ -87,18 +97,62 @@ class WakeService : Service() {
             val state = i?.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
             when (state) {
                 TelephonyManager.EXTRA_STATE_RINGING -> onRinging(i.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER))
-                TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                    ringing = false
-                    if (!awayCall) { callMode = false; busy = true; stopListening() }
-                }
-                TelephonyManager.EXTRA_STATE_IDLE -> {
-                    val wasCall = ringing || callMode || awayCall || busy
-                    if (awayCall) endAway(false)
-                    ringing = false; callMode = false; ringNumber = null
-                    if (wasCall && !awaitingConfirm) handler.postDelayed({ resume() }, 1000)
-                }
+                TelephonyManager.EXTRA_STATE_OFFHOOK -> onCallActive()
+                TelephonyManager.EXTRA_STATE_IDLE -> onCallIdle()
             }
         }
+    }
+
+    private fun onCallActive() {
+        ringing = false
+        if (!awayCall) { callMode = false; busy = true; stopListening() }
+    }
+
+    private fun onCallIdle() {
+        val wasCall = ringing || callMode || awayCall || busy
+        if (awayCall) endAway(false)
+        ringing = false; callMode = false; ringNumber = null
+        if (wasCall && !awaitingConfirm) handler.postDelayed({ resume() }, 1000)
+    }
+
+    // A tiny invisible overlay lets Kori open apps from the background (needs "Display over other apps").
+    private fun addAnchor() {
+        if (anchor != null || !Settings.canDrawOverlays(this)) return
+        try {
+            val v = View(this)
+            v.setBackgroundColor(0x01000000)
+            val lp = WindowManager.LayoutParams(
+                1, 1, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT
+            )
+            lp.gravity = Gravity.TOP or Gravity.START
+            getSystemService(WindowManager::class.java).addView(v, lp)
+            anchor = v
+            KoriBus.overlayActive = true
+        } catch (_: Exception) { }
+    }
+
+    private fun removeAnchor() {
+        anchor?.let { try { getSystemService(WindowManager::class.java).removeView(it) } catch (_: Exception) { } }
+        anchor = null
+        KoriBus.overlayActive = false
+    }
+
+    private fun boostVolume() {
+        try {
+            val am = getSystemService(AudioManager::class.java)
+            savedStream = if (core.prefs.callVoice == "call") AudioManager.STREAM_VOICE_CALL else AudioManager.STREAM_MUSIC
+            savedVol = am.getStreamVolume(savedStream)
+            am.setStreamVolume(savedStream, am.getStreamMaxVolume(savedStream), 0)
+        } catch (_: Exception) { }
+    }
+
+    private fun restoreVolume() {
+        try {
+            if (savedVol >= 0) getSystemService(AudioManager::class.java).setStreamVolume(savedStream, savedVol, 0)
+        } catch (_: Exception) { }
+        savedVol = -1
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -133,6 +187,10 @@ class WakeService : Service() {
         } catch (_: Exception) { }
         KoriBus.wakeActive = true
         busy = false
+        addAnchor()
+        CallRegistry.onRinging = { num -> handler.post { onRinging(num) } }
+        CallRegistry.onActive = { handler.post { onCallActive() } }
+        CallRegistry.onIdle = { handler.post { onCallIdle() } }
         KoriNotificationListener.onWhatsApp =
             if (core.prefs.announceWa) { s: String, t: String -> onWhatsApp(s, t) } else null
         if (!receiverRegistered) {
@@ -191,7 +249,7 @@ class WakeService : Service() {
         t.setLanguage(currentLang().locale)
         t.setAudioAttributes(
             AudioAttributes.Builder()
-                .setUsage(if (call) AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_ASSISTANT)
+                .setUsage(if (call) (if (core.prefs.callVoice == "call") AudioAttributes.USAGE_VOICE_COMMUNICATION else AudioAttributes.USAGE_MEDIA) else AudioAttributes.USAGE_ASSISTANT)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
         )
@@ -272,7 +330,14 @@ class WakeService : Service() {
 
     private fun awayGreet() {
         if (!awayCall) return
+        CallRegistry.setSpeaker(true)
         try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = true } catch (_: Exception) { }
+        boostVolume()
+        handler.postDelayed({ awayGreetSpeak() }, 700)
+    }
+
+    private fun awayGreetSpeak() {
+        if (!awayCall) return
         say(
             "Hello, this is Kori, an AI assistant for ${owner()}. ${owner()} is unavailable right now. " +
                 "This call may be transcribed so I can pass on your message. Please tell me your name and why you are calling.",
@@ -303,6 +368,8 @@ class WakeService : Service() {
         stopListening()
         if (hangUp) core.callControl(false)
         try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = false } catch (_: Exception) { }
+        CallRegistry.setSpeaker(false)
+        restoreVolume()
         val who = awayWho
         val num = awayNumber
         val transcript = awayLines.joinToString(" / ")
@@ -312,19 +379,20 @@ class WakeService : Service() {
             CallNotes.add(core.secrets, who, note, transcript)
             KoriBus.notesTick++
             KoriBus.messages.add(ChatLine("conix", "Call note - $who: $note"))
-            if (transcript.isBlank() && num != null && core.prefs.awaySms) sendAwaySms(num)
+            if (transcript.isBlank() && num != null && core.prefs.awaySms) sendAwaySms(num, who)
         }
         busy = false
         handler.postDelayed({ resume() }, 1200)
     }
 
-    private fun sendAwaySms(num: String) {
+    private fun sendAwaySms(num: String, who: String) {
         if (!granted(Manifest.permission.SEND_SMS)) return
         try {
             val sm = if (Build.VERSION.SDK_INT >= 31) getSystemService(SmsManager::class.java)
             else @Suppress("DEPRECATION") SmsManager.getDefault()
             val text = "Kori (AI assistant of ${owner()}): ${owner()} can't talk right now. Please text your name and reason and they will get back to you."
             sm.sendMultipartTextMessage(num, null, sm.divideMessage(text), null, null)
+            AwayWatch.add(this, num, who)
         } catch (_: Exception) { }
     }
 
@@ -418,6 +486,10 @@ class WakeService : Service() {
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         KoriNotificationListener.onWhatsApp = null
+        CallRegistry.onRinging = null
+        CallRegistry.onActive = null
+        CallRegistry.onIdle = null
+        removeAnchor()
         if (receiverRegistered) { try { unregisterReceiver(phoneReceiver) } catch (_: Exception) { } }
         try { wl?.let { if (it.isHeld) it.release() } } catch (_: Exception) { }
         ears?.release()
