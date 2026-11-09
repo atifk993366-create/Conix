@@ -34,7 +34,11 @@ class MainActivity : FragmentActivity(), TextToSpeech.OnInitListener {
 
     override fun onStart() { super.onStart(); KoriBus.appInForeground = true }
     override fun onResume() { super.onResume(); KoriBus.resumeTick++ }
-    override fun onStop() { KoriBus.appInForeground = false; super.onStop() }
+    override fun onStop() {
+        KoriBus.appInForeground = false
+        com.conix.assistant.core.BackupManager.autoBackup(this)
+        super.onStop()
+    }
 
     override fun onInit(status: Int) { ttsReady = status == TextToSpeech.SUCCESS }
 

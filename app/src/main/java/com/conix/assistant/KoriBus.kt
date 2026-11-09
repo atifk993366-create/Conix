@@ -21,5 +21,8 @@ object KoriBus {
     var awayUntil by mutableLongStateOf(0L)
     /** When non-null the camera screen opens with this question. */
     var cameraRequest by mutableStateOf<String?>(null)
+    var devOpen by mutableStateOf(false)
     @Volatile var appInForeground = false
+    /** True while Kori holds a tiny invisible overlay, which lets it start apps from the background. */
+    @Volatile var overlayActive = false
 }

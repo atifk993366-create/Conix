@@ -2,6 +2,8 @@ package com.conix.assistant
 
 import android.Manifest
 import android.app.Activity
+import android.app.role.RoleManager
+import android.os.Build
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.conix.assistant.access.KoriAccessibility
 import com.conix.assistant.brain.Providers
+import com.conix.assistant.core.BackupManager
 import com.conix.assistant.core.CallNotes
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.live.Interpreter
@@ -77,7 +80,8 @@ fun LangChips(lang: AppLang, onLang: (AppLang) -> Unit) {
 fun DashboardScreen(
     micOk: Boolean, notifOk: Boolean, lang: AppLang,
     onGrant: () -> Unit, onQuick: (String) -> Unit,
-    enrolled: Boolean = false, brainReady: Boolean = false, wakeOn: Boolean = false
+    enrolled: Boolean = false, brainReady: Boolean = false, wakeOn: Boolean = false,
+    onDev: () -> Unit = {}
 ) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -104,6 +108,13 @@ fun DashboardScreen(
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = onGrant) { Text("Grant permissions") }
             }
+        }
+        CxCard {
+            Text("Develop & Fix", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text("Let Kori read its own code, fix bugs and add features.", color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onDev) { Text("Open Develop & Fix") }
         }
         CxCard {
             Text("Quick commands", style = MaterialTheme.typography.titleMedium)
@@ -425,6 +436,11 @@ fun SettingsScreen(
     var showPicker by remember { mutableStateOf(false) }
     var lockMode by remember { mutableStateOf(core.prefs.lockScreenMode) }
     var awaySms by remember { mutableStateOf(core.prefs.awaySms) }
+    var callVoice by remember { mutableStateOf(core.prefs.callVoice) }
+    var bpass by remember { mutableStateOf("") }
+    var backupMsg by remember { mutableStateOf("") }
+    var autoBackup by remember { mutableStateOf(core.prefs.backupAuto) }
+    val roleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { KoriBus.resumeTick++ }
 
     fun open(i: Intent) { try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) { } }
 
@@ -624,6 +640,81 @@ fun SettingsScreen(
         }
 
         CxCard {
+            Text("Kori Phone (default dialer)", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            val rm = if (Build.VERSION.SDK_INT >= 29) ctx.getSystemService(RoleManager::class.java) else null
+            val isDialer = rm != null && rm.isRoleHeld(RoleManager.ROLE_DIALER)
+            StatusRow("Kori is my phone app", if (isDialer) "Yes" else "No", isDialer)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_DIALER)) roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_DIALER))
+                }) { Text("Make Kori my phone app") }
+                OutlinedButton(onClick = { open(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }) { Text("Default apps") }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "As the phone app Kori can answer, switch to speaker and hang up reliably, which Away mode needs. Test it with a second phone first; you can switch back to Google Phone in Default apps any time.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("Kori's voice in calls", color = Cx.Muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = callVoice == "media", onClick = { callVoice = "media"; core.prefs.callVoice = "media" }, label = { Text("Loud speaker") })
+                FilterChip(selected = callVoice == "call", onClick = { callVoice = "call"; core.prefs.callVoice = "call" }, label = { Text("Call stream") })
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Android does not let any app speak into the other person's ear. Kori plays its voice loudly on the speaker and the phone's microphone carries it to the caller. If the caller hears nothing, try the other mode; if neither works your phone blocks it, and Away mode then texts the caller instead.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        CxCard {
+            Text("Backup and restore (survives uninstall)", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Kori keeps your keys, voice profile, training data and settings in the shared folder /Kori on your phone, like Minecraft keeps worlds. After uninstalling and installing a new version, restore from it. Voice models also live there, so they are not downloaded again.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            val access = BackupManager.hasAccess() && tick >= 0
+            StatusRow("All-files access", if (access) "Allowed" else "Needed", access)
+            Button(onClick = {
+                open(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + ctx.packageName)))
+            }) { Text("Allow all-files access") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = bpass, onValueChange = { bpass = it },
+                label = { Text("Backup passphrase (remember it)") }, singleLine = true,
+                visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    scope.launch {
+                        if (bpass.isNotBlank()) core.secrets.put("backup_pass", bpass)
+                        val pass = if (bpass.isNotBlank()) bpass else core.secrets.get("backup_pass") ?: ""
+                        backupMsg = withContext(Dispatchers.IO) { BackupManager.backup(ctx, pass) }
+                    }
+                }) { Text("Back up now") }
+                OutlinedButton(onClick = {
+                    scope.launch {
+                        val pass = if (bpass.isNotBlank()) bpass else core.secrets.get("backup_pass") ?: ""
+                        backupMsg = withContext(Dispatchers.IO) { BackupManager.restore(ctx, pass) }
+                        if (backupMsg.startsWith("Restored") && bpass.isNotBlank()) core.secrets.put("backup_pass", bpass)
+                    }
+                }) { Text("Restore") }
+            }
+            SwitchRow("Back up automatically when I leave the app", autoBackup) { autoBackup = it; core.prefs.backupAuto = it }
+            if (backupMsg.isNotEmpty()) Text(backupMsg, color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
+        }
+
+        CxCard {
+            Text("Develop & Fix", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Button(onClick = { KoriBus.devOpen = true }) { Text("Open Develop & Fix") }
+        }
+
+        CxCard {
             Text("Excluded apps", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
@@ -660,6 +751,7 @@ fun SettingsScreen(
             PermRow("Caller number", Manifest.permission.READ_CALL_LOG, tick)
             PermRow("Send SMS", Manifest.permission.SEND_SMS, tick)
             PermRow("Read SMS", Manifest.permission.READ_SMS, tick)
+            PermRow("Receive SMS (callers' replies)", Manifest.permission.RECEIVE_SMS, tick)
             val acc = KoriAccessibility.instance != null
             val nl = KoriNotificationListener.connected
             val overlay = Settings.canDrawOverlays(ctx)
@@ -689,7 +781,7 @@ fun SettingsScreen(
 
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("Kori AI v0.7.0", color = Cx.Muted)
+            Text("Kori AI v0.8.0", color = Cx.Muted)
             Text(
                 "Voice ID is experimental and never authorizes actions.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
@@ -28,11 +29,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.conix.assistant.core.BackupManager
 import com.conix.assistant.core.Gate
+import com.conix.assistant.dev.CrashLog
+import com.conix.assistant.dev.DevAgent
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.voice.SpeakerEmbedder
 import com.conix.assistant.voice.VoiceVault
@@ -105,7 +110,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                 Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE,
                 Manifest.permission.SEND_SMS, Manifest.permission.READ_SMS,
                 Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG,
-                Manifest.permission.ANSWER_PHONE_CALLS
+                Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.RECEIVE_SMS
             )
         )
     }
@@ -131,6 +136,37 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
     }
     LaunchedEffect(lang) { core.prefs.langTag = lang.tag }
     LaunchedEffect(Unit) { KoriBus.awayUntil = core.prefs.awayUntil }
+    var showRestore by remember { mutableStateOf(false) }
+    var restorePass by remember { mutableStateOf("") }
+    var restoreMsg by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        if (!core.prefs.initialized) {
+            core.prefs.initialized = true
+            if (BackupManager.hasBackup()) showRestore = true
+            else messages.add(ChatLine("conix", "New install? If you used Kori before, open Settings > Backup and restore, allow all-files access and tap Restore."))
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (core.prefs.autoFix && core.prefs.repo.isNotBlank()) {
+            val crash = CrashLog.last(ctx)
+            if (crash != null) {
+                CrashLog.clear(ctx)
+                messages.add(ChatLine("conix", "Kori crashed last time. Trying to fix it..."))
+                try {
+                    val agent = DevAgent(core, ctx.applicationContext)
+                    val p = agent.propose("Fix this crash in the app.", crash) { }
+                    val br = agent.apply(p) { }
+                    messages.add(ChatLine("conix", "Fix pushed to branch $br and the build started. Open Develop & Fix to install it."))
+                } catch (e: Exception) {
+                    messages.add(ChatLine("conix", "Auto-fix failed: ${e.message}"))
+                }
+            }
+        }
+    }
+    BackHandler(enabled = KoriBus.devOpen || KoriBus.cameraRequest != null) {
+        KoriBus.devOpen = false
+        KoriBus.cameraRequest = null
+    }
 
     MaterialTheme(
         colorScheme = darkColorScheme(
@@ -146,6 +182,8 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                 onClose = { KoriBus.cameraRequest = null },
                 speak = { t -> speak(t, lang) }
             )
+        } else if (KoriBus.devOpen) {
+            DevScreen(core, onClose = { KoriBus.devOpen = false })
         } else {
             val imeUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
             Scaffold(
@@ -172,7 +210,8 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                             onQuick = { send(it); tab = Tab.Chat },
                             enrolled = enrolled,
                             brainReady = brainReady,
-                            wakeOn = KoriBus.wakeActive
+                            wakeOn = KoriBus.wakeActive,
+                            onDev = { KoriBus.devOpen = true }
                         )
                         Tab.Voice -> VoiceScreen(
                             core, lang, micOk,
@@ -196,6 +235,34 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                     }
                 }
             }
+        }
+
+        if (showRestore) {
+            AlertDialog(
+                onDismissRequest = { showRestore = false },
+                title = { Text("Restore your data?") },
+                text = {
+                    Column {
+                        Text("A Kori backup was found on this phone. Enter your backup passphrase to bring back your keys, voice profile and settings.")
+                        OutlinedTextField(
+                            value = restorePass, onValueChange = { restorePass = it }, singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(), label = { Text("Passphrase") }
+                        )
+                        if (restoreMsg.isNotEmpty()) Text(restoreMsg)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        restoreMsg = BackupManager.restore(ctx, restorePass)
+                        if (restoreMsg.startsWith("Restored")) {
+                            core.secrets.put("backup_pass", restorePass)
+                            showRestore = false
+                            messages.add(ChatLine("conix", restoreMsg))
+                        }
+                    }) { Text("Restore") }
+                },
+                dismissButton = { TextButton(onClick = { showRestore = false }) { Text("Skip") } }
+            )
         }
 
         val pending = KoriBus.pending
