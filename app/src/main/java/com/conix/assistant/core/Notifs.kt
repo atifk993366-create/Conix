@@ -25,7 +25,7 @@ object Notifs {
     fun launch(ctx: Context, i: Intent) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try { (KoriAccessibility.instance ?: ctx).startActivity(i) } catch (_: Exception) { }
-        if (!KoriBus.appInForeground) tapToOpen(ctx, "Kori: tap to continue", i)
+        if (!KoriBus.appInForeground && !KoriBus.overlayActive) tapToOpen(ctx, "Kori: tap to continue", i)
     }
 
     fun tapToOpen(ctx: Context, title: String, i: Intent) {

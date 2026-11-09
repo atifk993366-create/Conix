@@ -84,6 +84,28 @@ class Prefs(ctx: Context) {
         get() = p.getBoolean("away_sms", true)
         set(v) { p.edit().putBoolean("away_sms", v).apply() }
 
+    /** "media" = Kori's voice plays loudly on the speaker during calls, "call" = in-call audio stream. */
+    var callVoice: String
+        get() = p.getString("call_voice", "media") ?: "media"
+        set(v) { p.edit().putString("call_voice", v).apply() }
+
+    /** GitHub "owner/name" of the repo Kori can fix and extend. */
+    var repo: String
+        get() = p.getString("repo", "") ?: ""
+        set(v) { p.edit().putString("repo", v.trim()).apply() }
+
+    var autoFix: Boolean
+        get() = p.getBoolean("auto_fix", false)
+        set(v) { p.edit().putBoolean("auto_fix", v).apply() }
+
+    var backupAuto: Boolean
+        get() = p.getBoolean("backup_auto", true)
+        set(v) { p.edit().putBoolean("backup_auto", v).apply() }
+
+    var initialized: Boolean
+        get() = p.getBoolean("initialized", false)
+        set(v) { p.edit().putBoolean("initialized", v).apply() }
+
     /** Package names Kori must never open or read notifications from. */
     var blockedApps: Set<String>
         get() = p.getStringSet("blocked_apps", null)?.toSet() ?: setOf("com.whatsapp.w4b")
@@ -105,6 +127,7 @@ class SecretStore(ctx: Context) {
     }
 
     fun remove(name: String) { File(dir, name).delete() }
+    fun names(): List<String> = dir.list()?.toList() ?: emptyList()
 
     private fun key(): SecretKey {
         val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }

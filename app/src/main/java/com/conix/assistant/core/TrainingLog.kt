@@ -21,7 +21,7 @@ class TrainingLog(ctx: Context, private val prefs: Prefs) {
     private val file = File(app.filesDir, "training/log.jsonl").also { it.parentFile?.mkdirs() }
 
     @Synchronized
-    fun add(user: String, reply: String, action: JSONObject?, source: String) {
+    fun add(user: String, reply: String, action: Any?, source: String) {
         if (!prefs.trainingLog || user.isBlank()) return
         if (file.exists() && file.length() > 20_000_000L) return
         val out = JSONObject().put("reply", reply).put("action", action ?: JSONObject.NULL)

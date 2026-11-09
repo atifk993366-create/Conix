@@ -29,6 +29,7 @@ import com.conix.assistant.MainActivity
 import com.conix.assistant.PendingAction
 import com.conix.assistant.access.KoriAccessibility
 import com.conix.assistant.brain.Brain
+import com.conix.assistant.dialer.CallRegistry
 import com.conix.assistant.notif.KoriNotificationListener
 import com.conix.assistant.wake.WakeService
 import kotlinx.coroutines.CoroutineScope
@@ -87,6 +88,7 @@ class ActionExecutor(
                 "away_on" -> awayOn(a.optInt("minutes", 10))
                 "away_off" -> awayOff()
                 "game_break" -> gameBreak(a.optInt("seconds", 120))
+                "incognito" -> incognito()
                 "reject_call" -> callControl(false)
                 "shop" -> shop(a.optString("query"), a.optString("site"))
                 "remember" -> { brain.addFact(a.optString("text")); "Saved to memory." }
@@ -416,6 +418,34 @@ class ActionExecutor(
         return "Do Not Disturb is on for $secs seconds. I turn it off by myself."
     }
 
+    /** Runs several actions one after another (apps open back to back). */
+    fun executeSequence(list: List<JSONObject>, interactive: Boolean): String {
+        val names = list.joinToString(", ") { a -> a.optString("name").ifBlank { a.optString("type") } }
+        scope.launch {
+            for ((i, a) in list.withIndex()) {
+                if (i > 0) delay(if (a.optString("type") == "incognito") 1200L else 700L)
+                val fb = execute(a, interactive)
+                if (fb.isNotBlank() && !fb.startsWith("Opening")) KoriBus.messages.add(com.conix.assistant.ChatLine("conix", fb))
+            }
+        }
+        return "Running ${list.size} steps: $names."
+    }
+
+    private fun incognito(): String {
+        val i = ctx.packageManager.getLaunchIntentForPackage("com.android.chrome") ?: return "Chrome is not installed."
+        Notifs.launch(ctx, i)
+        if (KoriAccessibility.instance == null) {
+            return "Chrome is open. Turn on Kori in Accessibility so I can switch to incognito myself."
+        }
+        scope.launch {
+            delay(1800)
+            tryClick { it.contains("more options") || it.contains("customize and control") }
+            delay(800)
+            tryClick { it.contains("new incognito tab") }
+        }
+        return "Opening a new incognito tab in Chrome..."
+    }
+
     private fun awayOff(): String {
         prefs.awayUntil = 0L
         KoriBus.awayUntil = 0L
@@ -424,6 +454,9 @@ class ActionExecutor(
 
     /** Answer or reject the ringing call (needs the "Answer phone calls" permission). */
     fun callControl(answer: Boolean): String {
+        if (CallRegistry.call != null) {
+            return if (answer) { CallRegistry.answer(); "Answering." } else { CallRegistry.reject(); "Call rejected." }
+        }
         if (!granted(Manifest.permission.ANSWER_PHONE_CALLS)) {
             return "Answer-calls permission is not granted (Settings > Contacts, calls, SMS)."
         }

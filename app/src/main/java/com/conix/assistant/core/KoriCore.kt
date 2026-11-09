@@ -6,6 +6,7 @@ import com.conix.assistant.ChatLine
 import com.conix.assistant.CommandRouter
 import com.conix.assistant.KoriBus
 import com.conix.assistant.brain.Brain
+import org.json.JSONArray
 
 /** One pipeline used by the chat screen and the wake-word service. Call from the main thread. */
 class KoriCore(ctx: Context) {
@@ -41,11 +42,11 @@ class KoriCore(ctx: Context) {
     /** [typed] = true when the user typed it (or tapped), false when it came from speech recognition. */
     suspend fun handle(text: String, typed: Boolean = true): String {
         val clean = FastPath.clean(text)
-        val fp = FastPath.parse(text)
+        val fp = FastPath.parseAll(text)
         if (fp != null) {
-            lockBlock(fp.first.optString("type"))?.let { return it }
-            training.add(clean, fp.second, fp.first, "fastpath")
-            val fb = exec.execute(fp.first, typed)
+            for (a in fp.first) lockBlock(a.optString("type"))?.let { return it }
+            training.add(clean, fp.second, if (fp.first.size == 1) fp.first[0] else JSONArray(fp.first), "fastpath")
+            val fb = if (fp.first.size == 1) exec.execute(fp.first[0], typed) else exec.executeSequence(fp.first, typed)
             return listOf(fp.second, fb).filter { it.isNotBlank() }.joinToString("\n").ifBlank { "Done." }
         }
         if (!brain.hasKey()) {
@@ -55,17 +56,18 @@ class KoriCore(ctx: Context) {
         lockBlock("")?.let { return it }
         try {
             val r = brain.ask(text, false)
-            val type = r.action?.optString("type") ?: ""
+            val all = listOfNotNull(r.action) + r.more
+            val type = all.firstOrNull()?.optString("type") ?: ""
             if (type == "research") {
                 KoriBus.messages.add(ChatLine("conix", "Checking the web..."))
-                val q = r.action?.optString("query").orEmpty().ifBlank { text }
+                val q = all.first().optString("query").ifBlank { text }
                 val rr = brain.ask(q, true)
                 training.add(clean, rr.reply, null, rr.provider.ifBlank { r.provider })
                 return format(rr.reply, "", rr.sources)
             }
-            if (r.action != null) lockBlock(type)?.let { return it }
-            training.add(clean, r.reply, r.action, r.provider)
-            val fb = exec.execute(r.action, typed)
+            for (a in all) lockBlock(a.optString("type"))?.let { return it }
+            training.add(clean, r.reply, if (all.size > 1) JSONArray(all) else r.action, r.provider)
+            val fb = if (all.size > 1) exec.executeSequence(all, typed) else exec.execute(r.action, typed)
             return format(r.reply, fb, r.sources)
         } catch (e: Exception) {
             return router.handle(text) + "\n\n(AI brain unavailable: ${e.message?.take(200)}. Used offline commands.)"

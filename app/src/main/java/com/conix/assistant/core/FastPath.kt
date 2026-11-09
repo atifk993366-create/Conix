@@ -124,6 +124,10 @@ object FastPath {
             return act("shop", "query" to it.groupValues[1].trim(), "site" to it.groupValues[2].lowercase()) to ""
         }
 
+        // incognito tab in Chrome
+        if (Regex("^(?:(?:switch to|go to|open|start|turn on)\\s+)?(?:an?\\s+)?(?:new\\s+)?incognito(?:\\s+(?:mode|tab|window))?$", I).containsMatchIn(t))
+            return act("incognito") to ""
+
         // open app
         Regex("^(?:open|launch|start)\\s+(?:the\\s+)?(.+?)(?:\\s+app)?$", I).find(t)?.let { r ->
             val name = r.groupValues[1].trim()
@@ -133,6 +137,22 @@ object FastPath {
             return act("open_app", "name" to it.groupValues[1].trim()) to ""
         }
         return null
+    }
+
+    /** Like [parse] but also understands several steps: "open A, then B and then C". */
+    fun parseAll(input: String): Pair<List<JSONObject>, String>? {
+        parse(input)?.let { return listOf(it.first) to it.second }
+        val t = clean(input).trimEnd('.', '!', '?', ' ')
+        val parts = t.split(Regex("\\s*(?:,\\s*)?(?:\\band then\\b|\\bthen\\b|\\band\\b|\\bafter that\\b|\\bphir\\b|\\bfir\\b|\\buske baad\\b|\\baur\\b|,)\\s*", I))
+            .map { it.replace(Regex("^(?:first|firstly|finally|lastly|and|then)\\s+", I), "").trim() }
+            .filter { it.isNotBlank() }
+        if (parts.size < 2) return null
+        val out = ArrayList<JSONObject>()
+        for (part in parts) {
+            val r = parse(part) ?: return null
+            out.add(r.first)
+        }
+        return out to ""
     }
 
     private fun musicCmd(w: String) = when (w.lowercase()) {
