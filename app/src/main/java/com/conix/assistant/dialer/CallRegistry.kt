@@ -33,9 +33,9 @@ object CallRegistry {
     fun hangup() { call?.disconnect() }
 
     /** Only the phone app (InCallService) is allowed to change the call's audio route. */
-    fun setSpeaker(on: Boolean) {
+    fun routeSpeaker(on: Boolean) {
         KoriInCallService.instance?.setAudioRoute(if (on) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_EARPIECE)
     }
 
-    fun setMuted(m: Boolean) { KoriInCallService.instance?.setMuted(m) }
+    fun muteCall(m: Boolean) { KoriInCallService.instance?.setMuted(m) }
 }

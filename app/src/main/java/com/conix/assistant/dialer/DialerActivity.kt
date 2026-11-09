@@ -88,8 +88,8 @@ private fun InCallScreen() {
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { CallRegistry.setMuted(!CallRegistry.muted) }) { Text(if (CallRegistry.muted) "Unmute" else "Mute") }
-                OutlinedButton(onClick = { CallRegistry.setSpeaker(!CallRegistry.speaker) }) { Text(if (CallRegistry.speaker) "Speaker off" else "Speaker") }
+                OutlinedButton(onClick = { CallRegistry.muteCall(!CallRegistry.muted) }) { Text(if (CallRegistry.muted) "Unmute" else "Mute") }
+                OutlinedButton(onClick = { CallRegistry.routeSpeaker(!CallRegistry.speaker) }) { Text(if (CallRegistry.speaker) "Speaker off" else "Speaker") }
             }
             Spacer(Modifier.height(24.dp))
             Button(onClick = { CallRegistry.hangup() }) { Text("End call") }
