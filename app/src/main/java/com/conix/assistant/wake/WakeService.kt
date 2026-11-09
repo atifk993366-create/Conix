@@ -330,7 +330,7 @@ class WakeService : Service() {
 
     private fun awayGreet() {
         if (!awayCall) return
-        CallRegistry.setSpeaker(true)
+        CallRegistry.routeSpeaker(true)
         try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = true } catch (_: Exception) { }
         boostVolume()
         handler.postDelayed({ awayGreetSpeak() }, 700)
@@ -368,7 +368,7 @@ class WakeService : Service() {
         stopListening()
         if (hangUp) core.callControl(false)
         try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = false } catch (_: Exception) { }
-        CallRegistry.setSpeaker(false)
+        CallRegistry.routeSpeaker(false)
         restoreVolume()
         val who = awayWho
         val num = awayNumber
