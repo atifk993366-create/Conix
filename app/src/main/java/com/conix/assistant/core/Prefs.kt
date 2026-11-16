@@ -84,6 +84,29 @@ class Prefs(ctx: Context) {
         get() = p.getBoolean("away_sms", true)
         set(v) { p.edit().putBoolean("away_sms", v).apply() }
 
+    /** "text" = decline the call and send an SMS (works on every phone), "voice" = pick up and speak (callers may hear nothing). */
+    var callReply: String
+        get() = p.getString("call_reply", "text") ?: "text"
+        set(v) { p.edit().putString("call_reply", v).apply() }
+
+    /** Seconds the phone rings before Away mode steps in. */
+    var awayDelaySec: Int
+        get() = p.getInt("away_delay", 30)
+        set(v) { p.edit().putInt("away_delay", v).apply() }
+
+    var driving: Boolean
+        get() = p.getBoolean("driving", false)
+        set(v) { p.edit().putBoolean("driving", v).apply() }
+
+    var drivingText: String
+        get() = p.getString("driving_text", null)?.takeIf { it.isNotBlank() }
+            ?: "Main abhi gaadi chala raha hoon. Thodi der mein call karta hoon."
+        set(v) { p.edit().putString("driving_text", v).apply() }
+
+    var awayText: String
+        get() = p.getString("away_text", "") ?: ""
+        set(v) { p.edit().putString("away_text", v).apply() }
+
     /** "media" = Kori's voice plays loudly on the speaker during calls, "call" = in-call audio stream. */
     var callVoice: String
         get() = p.getString("call_voice", "media") ?: "media"
@@ -105,6 +128,57 @@ class Prefs(ctx: Context) {
     var initialized: Boolean
         get() = p.getBoolean("initialized", false)
         set(v) { p.edit().putBoolean("initialized", v).apply() }
+
+    var disabledCategories: Set<String>
+        get() = p.getStringSet("disabled_cats", null)?.toSet() ?: emptySet()
+        set(v) { p.edit().putStringSet("disabled_cats", HashSet(v)).apply() }
+
+    /** Master switch: when true Away/Driving never touch a call. */
+    var automationPaused: Boolean
+        get() = p.getBoolean("automation_paused", false)
+        set(v) { p.edit().putBoolean("automation_paused", v).apply() }
+
+    var memoryOn: Boolean
+        get() = p.getBoolean("memory_on", true)
+        set(v) { p.edit().putBoolean("memory_on", v).apply() }
+
+    var blockPrivate: Boolean
+        get() = p.getBoolean("block_private", false)
+        set(v) { p.edit().putBoolean("block_private", v).apply() }
+
+    var silenceUnknown: Boolean
+        get() = p.getBoolean("silence_unknown", false)
+        set(v) { p.edit().putBoolean("silence_unknown", v).apply() }
+
+    /** Phone numbers as their last 10 digits. */
+    var blocklist: Set<String>
+        get() = p.getStringSet("blocklist", null)?.toSet() ?: emptySet()
+        set(v) { p.edit().putStringSet("blocklist", HashSet(v)).apply() }
+
+    var allowlist: Set<String>
+        get() = p.getStringSet("allowlist", null)?.toSet() ?: emptySet()
+        set(v) { p.edit().putStringSet("allowlist", HashSet(v)).apply() }
+
+    var fwdNumber: String
+        get() = p.getString("fwd_number", "") ?: ""
+        set(v) { p.edit().putString("fwd_number", v.trim()).apply() }
+
+    var cloudUrl: String
+        get() = p.getString("cloud_url", "") ?: ""
+        set(v) { p.edit().putString("cloud_url", v.trim().trimEnd('/')).apply() }
+
+    var cloudSync: Boolean
+        get() = p.getBoolean("cloud_sync", false)
+        set(v) { p.edit().putBoolean("cloud_sync", v).apply() }
+
+    var cloudLastId: Long
+        get() = p.getLong("cloud_last_id", 0L)
+        set(v) { p.edit().putLong("cloud_last_id", v).apply() }
+
+    /** Features you have personally tested on your phone (Diagnostics checklist). */
+    var verified: Set<String>
+        get() = p.getStringSet("verified", null)?.toSet() ?: emptySet()
+        set(v) { p.edit().putStringSet("verified", HashSet(v)).apply() }
 
     /** Package names Kori must never open or read notifications from. */
     var blockedApps: Set<String>

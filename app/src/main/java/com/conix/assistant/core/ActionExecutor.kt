@@ -58,8 +58,13 @@ class ActionExecutor(
     fun execute(a: JSONObject?, interactive: Boolean = true): String {
         if (a == null) return ""
         this.interactive = interactive
-        return try {
-            when (a.optString("type")) {
+        val type = a.optString("type")
+        if (!Policy.alwaysAllowed(type) && Policy.categoryOf(type) in prefs.disabledCategories) {
+            return "That is switched off in Settings: " + (Policy.categories[Policy.categoryOf(type)] ?: "")
+        }
+        Policy.validate(type, a)?.let { return it }
+        val result = try {
+            when (type) {
                 "open_app" -> openApp(a.optString("name"))
                 "open_url" -> {
                     val u = a.optString("url")
@@ -87,16 +92,21 @@ class ActionExecutor(
                 "camera_identify" -> cameraIdentify(a.optString("question"))
                 "away_on" -> awayOn(a.optInt("minutes", 10))
                 "away_off" -> awayOff()
+                "driving_on" -> setDriving(true)
+                "driving_off" -> setDriving(false)
                 "game_break" -> gameBreak(a.optInt("seconds", 120))
                 "incognito" -> incognito()
                 "reject_call" -> callControl(false)
                 "shop" -> shop(a.optString("query"), a.optString("site"))
-                "remember" -> { brain.addFact(a.optString("text")); "Saved to memory." }
+                "remember" -> if (prefs.memoryOn) { brain.addFact(a.optString("text")); "Saved to memory." } else "Memory is switched off in Settings."
+                "stop_assistant" -> { ctx.stopService(Intent(ctx, WakeService::class.java)); "Okay, I stopped listening." }
                 else -> ""
             }
         } catch (e: Exception) {
             "Action failed: ${e.message}"
         }
+        AuditLog.add(ctx, type, Policy.describe(a), result)
+        return result
     }
 
     // ---------- helpers ----------
@@ -416,6 +426,16 @@ class ActionExecutor(
             KoriBus.messages.add(com.conix.assistant.ChatLine("conix", "Game break is over. Do Not Disturb is off."))
         }
         return "Do Not Disturb is on for $secs seconds. I turn it off by myself."
+    }
+
+    private fun setDriving(on: Boolean): String {
+        prefs.driving = on
+        KoriBus.driving = on
+        if (!on) return "Driving mode off."
+        try { ContextCompat.startForegroundService(ctx, Intent(ctx, WakeService::class.java)) } catch (_: Exception) { }
+        val how = if (prefs.callReply == "text") "I decline calls at once and text the caller: \"${prefs.drivingText}\""
+        else "I pick up and say your driving message."
+        return "Driving mode on. $how"
     }
 
     /** Runs several actions one after another (apps open back to back). */

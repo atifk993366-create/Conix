@@ -37,6 +37,12 @@ object FastPath {
         if (Regex("^(?:i(?:'m| am)\\s+back|main\\s+(?:wapas\\s+)?aa\\s+gaya|away mode\\s+off)$", I).containsMatchIn(t))
             return act("away_off") to ""
 
+        // driving mode
+        if (Regex("^(?:driving mode(?:\\s+on)?|drive mode(?:\\s+on)?|i(?:'m| am) driving|main (?:gaadi|gadi) chala raha (?:hu|hoon))$", I).containsMatchIn(t))
+            return act("driving_on") to ""
+        if (Regex("^(?:driving mode off|drive mode off|i(?:'m| am) not driving|i(?:'m| am) done driving|main pahunch gaya)$", I).containsMatchIn(t))
+            return act("driving_off") to ""
+
         // game break: Do Not Disturb for 2 minutes (does not play the game)
         if (Regex("^(?:game (?:break|mode)|gaming mode|(?:i(?:'m| am) )?going to the toilet|main toilet ja\\w*)(?:\\s+on)?$", I).containsMatchIn(t))
             return act("game_break", "seconds" to 120) to ""

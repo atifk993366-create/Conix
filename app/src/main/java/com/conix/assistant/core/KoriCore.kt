@@ -15,10 +15,11 @@ class KoriCore(ctx: Context) {
     val secrets = SecretStore(app)
     val brain = Brain(prefs, secrets)
     val training = TrainingLog(app, prefs)
+    val intents = LocalIntents(app)
     private val exec = ActionExecutor(app, brain, prefs, secrets)
     private val router = CommandRouter(app)
 
-    private val lockAllowed = setOf("", "call", "answer_call", "reject_call", "away_on", "away_off")
+    private val lockAllowed = setOf("", "call", "answer_call", "reject_call", "away_on", "away_off", "driving_on", "driving_off")
 
     fun callControl(answer: Boolean) = exec.callControl(answer)
 
@@ -48,6 +49,12 @@ class KoriCore(ctx: Context) {
             training.add(clean, fp.second, if (fp.first.size == 1) fp.first[0] else JSONArray(fp.first), "fastpath")
             val fb = if (fp.first.size == 1) exec.execute(fp.first[0], typed) else exec.executeSequence(fp.first, typed)
             return listOf(fp.second, fb).filter { it.isNotBlank() }.joinToString("\n").ifBlank { "Done." }
+        }
+        val local = intents.route(clean)
+        if (local != null) {
+            lockBlock(local.first.optString("type"))?.let { return it }
+            training.add(clean, "", local.first, "local-model")
+            return exec.execute(local.first, typed).ifBlank { "Done." }
         }
         if (!brain.hasKey()) {
             lockBlock("unknown")?.let { return it }
