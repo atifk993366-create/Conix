@@ -63,9 +63,14 @@ class Brain(private val prefs: Prefs, private val secrets: SecretStore) {
     }
 
     fun addFact(f: String) {
+        if (!prefs.memoryOn) return
         val l = facts().toMutableList()
         l.add(f.take(200))
         secrets.put("memory", JSONArray(l.takeLast(50)).toString())
+    }
+
+    fun replaceFacts(l: List<String>) {
+        if (l.isEmpty()) secrets.remove("memory") else secrets.put("memory", JSONArray(l.take(50)).toString())
     }
 
     fun clearMemory() { secrets.remove("memory"); history.clear() }
@@ -137,7 +142,7 @@ class Brain(private val prefs: Prefs, private val secrets: SecretStore) {
     // ---------------------------------------------------------------- prompts
     private fun system(research: Boolean): String {
         val now = SimpleDateFormat("EEEE, d MMMM yyyy HH:mm", Locale.ENGLISH).format(Date())
-        val facts = facts()
+        val facts = if (prefs.memoryOn) facts() else emptyList()
         val factText = if (facts.isEmpty()) "none" else facts.joinToString("; ")
         if (research) {
             return "You are Kori, a research assistant on the user's phone. Current date/time: $now. " +
@@ -155,6 +160,8 @@ Actions:
 {"type":"camera_identify","question":"what the user wants to know about what is in front of the camera"}
 {"type":"away_on","minutes":10}
 {"type":"away_off"}
+{"type":"driving_on"}
+{"type":"driving_off"}
 {"type":"game_break","seconds":120}
 {"type":"incognito"}   (new incognito tab in Chrome)
 {"type":"open_app","name":"WhatsApp"}
