@@ -6,13 +6,31 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.conix.assistant.core.ChatStore
 
 /** An action waiting for confirmation (and phone unlock when [needsUnlock] is true). */
 class PendingAction(val title: String, val detail: String, val needsUnlock: Boolean = true, val run: () -> String)
 
+/** The conversation. Every message is also saved to the phone. */
+class ChatFeed(initial: List<ChatLine>) {
+    val items = mutableStateListOf<ChatLine>().also { it.addAll(initial) }
+
+    fun add(line: ChatLine): Boolean {
+        items.add(line)
+        ChatStore.append(line)
+        return true
+    }
+
+    fun restore(history: List<ChatLine>) {
+        if (history.isNotEmpty()) { items.clear(); items.addAll(history) }
+    }
+
+    fun clear() { items.clear() }
+}
+
 object KoriBus {
-    val messages = mutableStateListOf(
-        ChatLine("conix", "Hello! I'm Kori. Type or speak - I work out by myself whether it's a command or a question. Add an AI key in Settings to unlock everything.")
+    val messages = ChatFeed(
+        listOf(ChatLine("conix", "Hello! I'm Kori. Type or speak - I work out by myself whether it's a command or a question. Add an AI key in Settings to unlock everything."))
     )
     var pending by mutableStateOf<PendingAction?>(null)
     var wakeActive by mutableStateOf(false)
@@ -22,6 +40,9 @@ object KoriBus {
     /** When non-null the camera screen opens with this question. */
     var cameraRequest by mutableStateOf<String?>(null)
     var devOpen by mutableStateOf(false)
+    var driving by mutableStateOf(false)
+    /** "calls", "memory" or "diag" opens that screen full-screen. */
+    var sub by mutableStateOf<String?>(null)
     @Volatile var appInForeground = false
     /** True while Kori holds a tiny invisible overlay, which lets it start apps from the background. */
     @Volatile var overlayActive = false

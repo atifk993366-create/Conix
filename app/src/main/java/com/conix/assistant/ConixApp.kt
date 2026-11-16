@@ -135,7 +135,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
         enrolled = vault.isEnrolled(); brainReady = core.brain.hasKey()
     }
     LaunchedEffect(lang) { core.prefs.langTag = lang.tag }
-    LaunchedEffect(Unit) { KoriBus.awayUntil = core.prefs.awayUntil }
+    LaunchedEffect(Unit) { KoriBus.awayUntil = core.prefs.awayUntil; KoriBus.driving = core.prefs.driving }
     var showRestore by remember { mutableStateOf(false) }
     var restorePass by remember { mutableStateOf("") }
     var restoreMsg by remember { mutableStateOf("") }
@@ -163,9 +163,13 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
             }
         }
     }
-    BackHandler(enabled = KoriBus.devOpen || KoriBus.cameraRequest != null) {
+    BackHandler(enabled = KoriBus.devOpen || KoriBus.cameraRequest != null || KoriBus.sub != null) {
         KoriBus.devOpen = false
         KoriBus.cameraRequest = null
+        KoriBus.sub = null
+    }
+    LaunchedEffect(Unit) {
+        if (core.prefs.cloudSync) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.conix.assistant.core.CloudSync.pull(ctx) }
     }
 
     MaterialTheme(
@@ -184,6 +188,8 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
             )
         } else if (KoriBus.devOpen) {
             DevScreen(core, onClose = { KoriBus.devOpen = false })
+        } else if (KoriBus.sub != null) {
+            SubScreen(core, KoriBus.sub ?: "", onClose = { KoriBus.sub = null })
         } else {
             val imeUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
             Scaffold(
@@ -211,7 +217,8 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                             enrolled = enrolled,
                             brainReady = brainReady,
                             wakeOn = KoriBus.wakeActive,
-                            onDev = { KoriBus.devOpen = true }
+                            onDev = { KoriBus.devOpen = true },
+                            onSub = { KoriBus.sub = it }
                         )
                         Tab.Voice -> VoiceScreen(
                             core, lang, micOk,
@@ -220,7 +227,7 @@ fun ConixApp(core: KoriCore, speak: (String, AppLang) -> Boolean, speakCall: (St
                             onHeard = { send(it, false); tab = Tab.Chat },
                             speakCall = speakCall
                         )
-                        Tab.Chat -> ChatScreen(messages, thinking, onSend = { send(it) })
+                        Tab.Chat -> ChatScreen(messages.items, thinking, onSend = { send(it) })
                         Tab.Security -> SecurityScreen(vault, embedder, micOk, onRequestPerms = { requestPerms() })
                         Tab.Settings -> SettingsScreen(
                             core, lang, micOk, notifOk,

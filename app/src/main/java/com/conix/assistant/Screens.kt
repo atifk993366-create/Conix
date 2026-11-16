@@ -81,7 +81,8 @@ fun DashboardScreen(
     micOk: Boolean, notifOk: Boolean, lang: AppLang,
     onGrant: () -> Unit, onQuick: (String) -> Unit,
     enrolled: Boolean = false, brainReady: Boolean = false, wakeOn: Boolean = false,
-    onDev: () -> Unit = {}
+    onDev: () -> Unit = {},
+    onSub: (String) -> Unit = {}
 ) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -107,6 +108,20 @@ fun DashboardScreen(
             if (!micOk || !notifOk) {
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = onGrant) { Text("Grant permissions") }
+            }
+        }
+        CxCard {
+            Text("Tools", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            val c = LocalContext.current
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { onSub("calls") }) { Text("Call Assistant") }
+                OutlinedButton(onClick = { onSub("memory") }) { Text("Memory & Privacy") }
+                OutlinedButton(onClick = { onSub("diag") }) { Text("Diagnostics") }
+            }
+            if (wakeOn) {
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = { c.stopService(Intent(c, WakeService::class.java)) }) { Text("Stop microphone") }
             }
         }
         CxCard {
@@ -179,6 +194,11 @@ fun VoiceScreen(
     val awayOn = awayUntil > System.currentTimeMillis()
     var awayMin by remember { mutableIntStateOf(10) }
     var owner by remember { mutableStateOf(core.prefs.ownerName) }
+    var callReply by remember { mutableStateOf(core.prefs.callReply) }
+    var ringDelay by remember { mutableIntStateOf(core.prefs.awayDelaySec) }
+    var drivingText by remember { mutableStateOf(core.prefs.drivingText) }
+    var awayText by remember { mutableStateOf(core.prefs.awayText) }
+    val drivingOn = KoriBus.driving
     val notes = remember(notesTick) { CallNotes.all(core.secrets) }
 
     val interpreter = remember { Interpreter(ctx.applicationContext, core) }
@@ -210,13 +230,31 @@ fun VoiceScreen(
             Text("Away mode", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
-                "Kori answers incoming calls on speaker, tells the caller it is an AI assistant and that the call may be transcribed, asks their name and reason, then hangs up and leaves you a note. Needs the Hey Kori listener (it starts automatically).",
+                "After the phone has rung for the time you choose, Kori deals with the caller and leaves you a note. Text mode (recommended) declines the call and sends the caller an SMS; with Kori Phone as your phone app it works even when the listener is off.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = owner, onValueChange = { owner = it; core.prefs.ownerName = it },
                 label = { Text("Your name (what Kori tells callers)") }, singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            Text("Step in after ringing for:", color = Cx.Muted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(10, 30, 60).forEach { d ->
+                    FilterChip(selected = ringDelay == d, onClick = { ringDelay = d; core.prefs.awayDelaySec = d }, label = { Text("$d s") })
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Text("How Kori answers callers:", color = Cx.Muted)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = callReply == "text", onClick = { callReply = "text"; core.prefs.callReply = "text" }, label = { Text("Text message (works)") })
+                FilterChip(selected = callReply == "voice", onClick = { callReply = "voice"; core.prefs.callReply = "voice" }, label = { Text("Pick up and speak (experimental)") })
+            }
+            Spacer(Modifier.height(6.dp))
+            OutlinedTextField(
+                value = awayText, onValueChange = { awayText = it; core.prefs.awayText = it },
+                label = { Text("Message to callers (empty = default)") }, modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -253,6 +291,34 @@ fun VoiceScreen(
                 notes.take(8).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
                 OutlinedButton(onClick = { CallNotes.clear(core.secrets); KoriBus.notesTick++ }) { Text("Clear notes") }
             }
+        }
+
+        CxCard {
+            Text("Driving mode", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Calls are dealt with at once and the caller gets your driving message. No introduction. You can also say \"Hey Kori, I'm driving\".",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {
+                val on = !drivingOn
+                core.prefs.driving = on
+                KoriBus.driving = on
+                if (on && micOk) {
+                    try { ContextCompat.startForegroundService(ctx, Intent(ctx, WakeService::class.java)) } catch (_: Exception) { }
+                }
+            }) { Text(if (drivingOn) "Driving mode is ON - tap to turn off" else "Turn on driving mode") }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = drivingText, onValueChange = { drivingText = it; core.prefs.drivingText = it },
+                label = { Text("Driving message") }, modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Many phones (including Realme) do not let any app speak into a call, so the default is a text message sent to the caller right away. It needs Kori Phone as your phone app. \"Pick up and speak\" is experimental.",
+                color = Cx.Muted, style = MaterialTheme.typography.bodySmall
+            )
         }
 
         CxCard {
@@ -350,14 +416,14 @@ fun ChatScreen(messages: List<ChatLine>, thinking: Boolean, onSend: (String) -> 
 }
 
 @Composable
-private fun PermRow(label: String, perm: String, tick: Int) {
+internal fun PermRow(label: String, perm: String, tick: Int) {
     val ctx = LocalContext.current
     val ok = tick >= 0 && ContextCompat.checkSelfPermission(ctx, perm) == PackageManager.PERMISSION_GRANTED
     StatusRow(label, if (ok) "Granted" else "Not granted", ok)
 }
 
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onChange)
@@ -568,6 +634,7 @@ fun SettingsScreen(
                 OutlinedButton(onClick = { core.training.clear(); logCount = 0; trainMsg = "Training data deleted." }) { Text("Delete all") }
             }
             OutlinedButton(onClick = { logCount = core.training.count() }) { Text("Refresh count") }
+            OutlinedButton(onClick = { trainMsg = core.training.exportIntents() }) { Text("Export intent CSV (for the small model)") }
             if (trainMsg.isNotEmpty()) Text(trainMsg, color = Cx.Muted, style = MaterialTheme.typography.bodySmall)
         }
 
@@ -781,7 +848,7 @@ fun SettingsScreen(
 
         CxCard {
             Text("About", style = MaterialTheme.typography.titleMedium)
-            Text("Kori AI v0.8.0", color = Cx.Muted)
+            Text("Kori AI v1.0.1", color = Cx.Muted)
             Text(
                 "Voice ID is experimental and never authorizes actions.",
                 color = Cx.Muted, style = MaterialTheme.typography.bodySmall

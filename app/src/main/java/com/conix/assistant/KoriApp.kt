@@ -7,5 +7,6 @@ class KoriApp : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashLog.install(this)
+        KoriBus.messages.restore(com.conix.assistant.core.ChatStore.init(this))
     }
 }
