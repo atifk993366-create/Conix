@@ -7,13 +7,21 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.drawable.Icon
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.ContactsContract
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.InCallService
+import com.conix.assistant.ChatLine
+import com.conix.assistant.KoriBus
+import com.conix.assistant.core.CallNotes
+import com.conix.assistant.core.Prefs
+import com.conix.assistant.core.SecretStore
 
 class KoriInCallService : InCallService() {
     private var lastState = -1
+    private val handler = Handler(Looper.getMainLooper())
 
     private val cb = object : Call.Callback() {
         override fun onStateChanged(call: Call, state: Int) { sync(call) }
@@ -25,12 +33,14 @@ class KoriInCallService : InCallService() {
 
     override fun onCallAdded(call: Call) {
         call.registerCallback(cb)
+        CallRegistry.calls.add(call)
+        CallRegistry.callCount = CallRegistry.calls.size
         CallRegistry.call = call
         lastState = -1
         sync(call)
         if (call.state == Call.STATE_RINGING) {
             showIncomingNotification()
-            CallRegistry.onRinging?.invoke(CallRegistry.number.ifBlank { null })
+            if (!screenWithText(call)) CallRegistry.onRinging?.invoke(CallRegistry.number.ifBlank { null })
         }
         try {
             startActivity(Intent(this, DialerActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
@@ -39,12 +49,18 @@ class KoriInCallService : InCallService() {
 
     override fun onCallRemoved(call: Call) {
         call.unregisterCallback(cb)
-        if (CallRegistry.call === call) {
-            CallRegistry.call = null
-            CallRegistry.state = Call.STATE_DISCONNECTED
-        }
+        CallRegistry.calls.remove(call)
+        CallRegistry.callCount = CallRegistry.calls.size
+        val next = CallRegistry.calls.lastOrNull()
+        CallRegistry.call = next
         getSystemService(NotificationManager::class.java).cancel(CALL_NOTIF)
-        CallRegistry.onIdle?.invoke()
+        if (next != null) {
+            lastState = -1
+            sync(next)
+        } else {
+            CallRegistry.state = Call.STATE_DISCONNECTED
+            CallRegistry.onIdle?.invoke()
+        }
     }
 
     override fun onCallAudioStateChanged(audioState: CallAudioState?) {
@@ -54,7 +70,10 @@ class KoriInCallService : InCallService() {
         }
     }
 
+    fun refresh(call: Call) { lastState = -1; sync(call) }
+
     private fun sync(call: Call) {
+        if (call !== CallRegistry.call) return
         val details = call.details
         val num = details?.handle?.schemeSpecificPart ?: ""
         CallRegistry.state = call.state
@@ -68,6 +87,41 @@ class KoriInCallService : InCallService() {
                 CallRegistry.onActive?.invoke()
             }
         }
+    }
+
+    /**
+     * Driving mode and Away mode in "text" style: decline the call and let the phone send an SMS.
+     * No microphone, no speaker tricks, so it works on every phone. Returns true if it took over.
+     */
+    private fun screenWithText(call: Call): Boolean {
+        val prefs = Prefs(this)
+        if (prefs.callReply != "text" || prefs.automationPaused) return false
+        val driving = prefs.driving
+        val away = System.currentTimeMillis() < prefs.awayUntil
+        if (!driving && !away) return false
+        if (!driving && CallRegistry.number.isNotBlank() && AwayWatch.recentlyScreened(this, CallRegistry.number, 180_000L)) return false   // calling again = urgent: let it ring
+        val delay = if (driving) 800L else prefs.awayDelaySec * 1000L
+        handler.postDelayed({
+            if (call.state == Call.STATE_RINGING) {
+                val who = CallRegistry.name.ifBlank { CallRegistry.number.ifBlank { "Unknown" } }
+                val num = CallRegistry.number
+                val text = if (driving) prefs.drivingText else awayMessage(prefs)
+                call.reject(true, text)
+                if (!driving && num.isNotBlank()) AwayWatch.markScreened(this, num)
+                if (num.isNotBlank()) AwayWatch.add(this, num, who)
+                val note = if (driving) "Called while you were driving. I texted them." else "Called while you were away. I texted them."
+                CallNotes.add(SecretStore(this), who, note, "")
+                KoriBus.notesTick++
+                KoriBus.messages.add(ChatLine("conix", "Call note - $who: $note"))
+            }
+        }, delay)
+        return true
+    }
+
+    private fun awayMessage(prefs: Prefs): String {
+        if (prefs.awayText.isNotBlank()) return prefs.awayText
+        val owner = prefs.ownerName.ifBlank { "the owner" }
+        return "Hi, main Kori hoon, $owner ka assistant. $owner abhi available nahi hain. Apna naam aur kaaran SMS kar dein, wo jaldi reply karenge. Urgent ho to 2 minute mein dobara call karein."
     }
 
     private fun nameOf(number: String): String {

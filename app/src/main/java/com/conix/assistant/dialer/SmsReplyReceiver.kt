@@ -13,7 +13,17 @@ import org.json.JSONObject
 /** Numbers Kori texted in Away mode; their replies become call notes. */
 object AwayWatch {
     private const val PREF = "away_watch"
-    private fun key(n: String) = n.filter { it.isDigit() }.takeLast(10)
+    fun key(n: String) = n.filter { it.isDigit() }.takeLast(10)
+
+    fun markScreened(ctx: Context, number: String) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putLong("s_" + key(number), System.currentTimeMillis()).apply()
+    }
+
+    /** A caller who rings again shortly after being screened is treated as urgent and gets through. */
+    fun recentlyScreened(ctx: Context, number: String, withinMs: Long): Boolean {
+        val t = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getLong("s_" + key(number), 0L)
+        return t > 0 && System.currentTimeMillis() - t < withinMs
+    }
 
     fun add(ctx: Context, number: String, who: String) {
         val sp = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
