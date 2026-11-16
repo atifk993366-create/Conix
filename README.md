@@ -1,7 +1,8 @@
-# Kori AI (v0.8.0)
+# Kori AI (v1.0.0)
 
-Upload every file and folder to your PRIVATE GitHub repo (keep paths, include .github and app/kori.keystore),
-run the "Build Kori APK" workflow, install app-debug.apk.
+Upload every file and folder to your PRIVATE GitHub repo (keep paths, include .github, app/kori.keystore,
+app/src/main/assets, training/ and backend/), run the "Build Kori APK" workflow, install app-debug.apk.
 
-Builds are now signed with the same key (app/kori.keystore), so updates install over the old app and keep your data.
-Do not make this repo public: the signing key is inside it.
+* `training/` - notebooks/scripts for the on-device intent model (and optional chat-model fine-tuning)
+* `backend/`  - optional cloud call agent starter (needs a telephony number; costs money)
+* `docs/TESTING_CHECKLIST.md` - what to verify before trusting a feature
