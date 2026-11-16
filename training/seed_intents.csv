@@ -1,0 +1,1774 @@
+text,intent
+zara ଟର୍ଚ୍ଚ ଜଳାଅ na,flashlight
+टाइमर सेट करो 20 मिनट के लिए,timer
+kori how are you na,chat
+youtube ଖୋଲ,open_app
+hey kori mute the phone jaldi,volume
+25 minute ka timer set karo,timer
+start ହ୍ୱାଟସଆପ୍,open_app
+zara what is this object in my hand please,camera_identify
+zara search cooking videos on youtube jaldi,youtube
+kori ମୁଁ ଡ୍ରାଇଭ୍ କରୁଛି na,driving_on
+please open settings for me,open_app
+zara flashlight chalu karo please,flashlight
+bas karo,stop_assistant
+କ୍ୟାମେରା खोलो,open_app
+zara मैं गाड़ी चला रहा हूं please,driving_on
+hey kori mujhe ek mazedaar baat batao na,chat
+please search for best phones under twenty thousand,web_search
+start जीमेल,open_app
+zara ମୋତେ ଏକ ଗପ କୁହ,chat
+please ghar phone lagao,call
+launch ଇନଷ୍ଟାଗ୍ରାମ୍,open_app
+reply to the last message,message
+7 मिनट बाद बताना,timer
+ଚୁପ୍ ରୁହ,stop_assistant
+mujhe 15 minute disturb mat karna na,away_on
+zara gaana pause karo ji,music
+hey kori battery kitni hai,device_info
+ring amit,call
+hey kori ଧନ୍ୟବାଦ please,chat
+ye kaun sa phool hai na,camera_identify
+start chrome,open_app
+please main drive kar raha hoon jaldi,driving_on
+zara gaana roko na,music
+please କେମିତି ଅଛ,chat
+kori youtube par bhajan lagao jaldi,youtube
+i am busy for 30 minutes,away_on
+ସକାଳ 10 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+मम्मी को व्हाट्सएप करो,message
+hey kori mujhe ek mazedaar baat batao ji,chat
+please ड्राइविंग मोड ऑफ करो jaldi,driving_off
+main free hoon ab,away_off
+45 मिनट का टाइमर लगाओ,timer
+please ଗୀତ ଚଳାଅ jaldi,music
+hey kori phone mom ji,call
+shaam 5 baje alarm lagana,alarm
+doctor ko call karo,call
+20 minute baad yaad dilana,timer
+ସକାଳ 12 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+kal ka mausam kaisa rahega,question
+सो जाओ,stop_assistant
+zara i'm driving right now please,driving_on
+please पापा को कॉल लगाओ na,call
+ଡ୍ରାଇଭିଂ ମୋଡ୍ ବନ୍ଦ କର,driving_off
+hey kori look up train timings please,web_search
+zara youtube par bhajan lagao please,youtube
+launch गैलरी,open_app
+zara what can you do jaldi,chat
+wake me up at 6:30,alarm
+please do not disturb for two minutes jaldi,game_break
+am i connected to wifi please,device_info
+please 10 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ ji,away_on
+how are you,chat
+please open maps for me,open_app
+hey kori tell me what this is jaldi,camera_identify
+you are great,chat
+mujhe 11 baje utha dena,alarm
+5 minute ka timer set karo,timer
+gaadi rok di hai,driving_off
+please doctor ko call karo please,call
+kori that's all thanks stop,stop_assistant
+countdown 45 minutes,timer
+12 मिनट बाद बताना,timer
+please how does photosynthesis work na,question
+ପରବର୍ତ୍ତୀ ଗୀତ ଚଳାଅ,music
+who is the prime minister of india na,question
+ହ୍ୱାଟସଆପ୍ kholo,open_app
+timer lagao 12 minute,timer
+remind me in 10 minutes,timer
+please open जीमेल for me,open_app
+kori tum kaun ho ji,chat
+zara i'm done driving please,driving_off
+hey kori ଫୋନ୍ ଖୋଜ jaldi,web_search
+what is the capital of france na,question
+torch on please,flashlight
+तुम कौन हो,chat
+start a 45 minute timer,timer
+google karo,web_search
+please i am busy for 30 minutes ji,away_on
+please ghar phone lagao na,call
+awaaz badhao,volume
+ମୋତେ ଏକ ଗପ କୁହ,chat
+please away mode on for 30 minutes na,away_on
+hey kori what kind of plant is this na,camera_identify
+zara ଖୋଜ ସର୍ବୋତ୍ତମ ଫୋନ୍,web_search
+set alarm for 6:15 in the morning,alarm
+main toilet ja raha hoon,game_break
+remind me in 45 minutes,timer
+launch youtube,open_app
+रुक जाओ please,stop_assistant
+kori main toilet ja raha hoon please,game_break
+drive mode band karo,driving_off
+मैं गाड़ी चला रहा हूं,driving_on
+timer lagao 7 minute,timer
+ୟୁଟ୍ୟୁବ୍ open karo,open_app
+zara gaana pause karo,music
+please ଡ୍ରାଇଭିଂ ମୋଡ୍ ଚାଲୁ କର jaldi,driving_on
+kori ड्राइविंग बंद na,driving_off
+टेलीग्राम खोलो,open_app
+please गाड़ी रोक दी jaldi,driving_off
+remind me in 3 minutes,timer
+kori कैसे हो na,chat
+kori play a funny video na,youtube
+hey kori ମୁଁ ଫେରିଆସିଲି,away_off
+kori चुप हो जाओ,stop_assistant
+kori away mode on for 30 minutes jaldi,away_on
+ଶୁଭ ସକାଳ,chat
+ୟୁଟ୍ୟୁବ୍ खोलो,open_app
+फ्लैशलाइट बंद करो,flashlight
+मैं 15 मिनट के लिए बिजी हूं,away_on
+please mute,volume
+kori ଭଲ୍ୟୁମ୍ କମାଅ jaldi,volume
+hey kori hi kori na,chat
+सर्च करो सबसे अच्छा फोन,web_search
+facebook khol do,open_app
+hey kori make it louder ji,volume
+ମାଙ୍କୁ କଲ୍ କର,call
+ये क्या है ji,camera_identify
+please ନମସ୍କାର,chat
+send a message to rahul saying i am late,message
+सेटिंग open karo,open_app
+torch jalao,flashlight
+30 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+stop,stop_assistant
+ye kaun sa jaanwar hai,camera_identify
+kori ମୁଁ ପହଞ୍ଚିଗଲି na,driving_off
+buy running shoes on amazon ji,shop
+please open gmail for me,open_app
+कैमरा ଖୋଲ,open_app
+open instagram,open_app
+zara ମୁଁ ପହଞ୍ଚି ଗଲି ji,driving_off
+volume up,volume
+play music,music
+start snapchat,open_app
+i am not driving,driving_off
+please is it going to rain today,question
+drive mode chalu karo,driving_on
+please ye kaun sa jaanwar hai please,camera_identify
+open इंस्टाग्राम,open_app
+zara mummy ko whatsapp karo ki main aa raha hoon ji,message
+main pahunch gaya,driving_off
+kori what is the capital of france na,question
+hey kori ଫ୍ଲାଶଲାଇଟ୍ ଚାଲୁ କର please,flashlight
+क्रोम खोलो,open_app
+launch କ୍ରୋମ୍,open_app
+please search how to tie a tie,web_search
+hey kori मैं 10 मिनट के लिए बिजी हूं na,away_on
+how does photosynthesis work ji,question
+chup ho jao,stop_assistant
+wake me up at 5:30,alarm
+please open spotify for me,open_app
+hey kori इसका नाम क्या है jaldi,camera_identify
+आवाज़ बढ़ाओ,volume
+please main free hoon ab na,away_off
+5 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+what is this,camera_identify
+zara find cheap flights please,web_search
+calculator open karo,open_app
+tell me your abilities,chat
+hey kori ଭାଇକୁ ମେସେଜ୍ ପଠାଅ ji,message
+ଇନଷ୍ଟାଗ୍ରାମ୍ kholo,open_app
+timer for 20 minutes please,timer
+जीमेल ଖୋଲ,open_app
+please gaming mode,game_break
+alarm set karo 7 baje,alarm
+25 minute baad yaad dilana,timer
+please open paytm for me,open_app
+please resume the song ji,music
+କ୍ରୋମ୍ खोलो,open_app
+hey kori pause the music please,music
+zara phone ko chup kara do,volume
+kori ମୋ ଭାଇକୁ କଲ୍ କର please,call
+ଆମାଜନ୍ ରେ ଜୋତା ଖୋଜ,shop
+zara reply to the last message please,message
+zara राहुल को मैसेज भेजो कि मैं लेट हूं,message
+look up train timings,web_search
+ହ୍ୱାଟସଆପ୍ open karo,open_app
+hey kori kya haal hai na,chat
+zara driving mode off jaldi,driving_off
+latest news about cricket,question
+alarm at 5 pm,alarm
+please ଭଲ୍ୟୁମ୍ କମାଅ ji,volume
+please ये कौन सा फूल है na,camera_identify
+hey kori wifi connected hai kya ji,device_info
+gallery kholo,open_app
+please mai gaadi chala raha hu na,driving_on
+hey kori order a phone cover ji,shop
+kori volume down please ji,volume
+pichla gaana,music
+main 10 minute ke liye busy hoon,away_on
+open व्हाट्सएप,open_app
+open camera,open_app
+mummy ko whatsapp karo ki main aa raha hoon jaldi,message
+zara rahul ko call karo jaldi,call
+hey kori mujhe 15 minute disturb mat karna jaldi,away_on
+mujhe 12 baje utha dena,alarm
+hey kori amazon par shoes dhundo,shop
+hey kori आवाज़ बढ़ाओ please,volume
+स्पॉटिफाई ଖୋଲ,open_app
+play arijit singh songs on youtube,youtube
+आज मौसम कैसा है,question
+सेटिंग kholo,open_app
+hey kori do not disturb for two minutes,game_break
+zara ଚୁପ୍ ରୁହ please,stop_assistant
+ଇଣ୍ଟରନେଟ୍ ଚାଲୁଛି କି na,device_info
+hey kori ड्राइविंग मोड चालू करो jaldi,driving_on
+hey kori i'm done driving,driving_off
+6 बजे उठा देना,alarm
+please what animal is this,camera_identify
+search headphones on flipkart,shop
+टाइमर सेट करो 45 मिनट के लिए,timer
+good night kori,chat
+କ୍ୟାମେରା kholo,open_app
+start ଇନଷ୍ଟାଗ୍ରାମ୍,open_app
+kori good night kori jaldi,chat
+zara क्या हाल है jaldi,chat
+please whatsapp mom that i am coming jaldi,message
+please what is this jaldi,camera_identify
+kori 15 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ jaldi,away_on
+play lofi music on youtube na,youtube
+open phonepe,open_app
+टाइमर सेट करो 10 मिनट के लिए,timer
+ସକାଳ 8 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+countdown 3 minutes,timer
+kori turn off the torch,flashlight
+main 30 minute ke liye busy hoon na,away_on
+भाई को फोन करो,call
+hey kori awaaz tez karo,volume
+zara bharat ki rajdhani kya hai please,question
+set a timer for 25 minutes,timer
+please sleep mode jaldi,stop_assistant
+सुबह 9 बजे का अलार्म लगाओ,alarm
+snapchat खोलो,open_app
+hey kori इंटरनेट पर खोजो ji,web_search
+please gaana roko ji,music
+7 minute baad yaad dilana,timer
+mujhe 15 minute disturb mat karna,away_on
+hey kori ड्राइविंग मोड ऑफ करो na,driving_off
+search karo jaldi,web_search
+zara बैटरी कितनी बची है please,device_info
+ଥମିଯାଅ,stop_assistant
+kori how tall is mount everest please,question
+kori गाना रोको ji,music
+hey kori how much battery is left,device_info
+set an alarm for 5 am,alarm
+start whatsapp,open_app
+papa ko call lagao,call
+इंस्टाग्राम kholo,open_app
+7 मिनट का टाइमर लगाओ,timer
+zara explain quantum computing simply please,question
+zara dial papa jaldi,call
+launch gmail,open_app
+please ଗୀତ ବନ୍ଦ କର na,music
+spotify khol do,open_app
+zara aaj barish hogi kya please,question
+hey kori text papa that i reached ji,message
+internet chal raha hai kya na,device_info
+ek timer 2 minute ka lagao,timer
+କେମିତି ଅଛ,chat
+shaam 7 baje alarm lagana,alarm
+zara ଚୁପ୍ ରୁହ ji,stop_assistant
+i am busy for 10 minutes,away_on
+ଭଲ୍ୟୁମ୍ କମାଅ,volume
+please what can you do jaldi,chat
+फेसबुक ଖୋଲ,open_app
+9 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+spotify खोलो,open_app
+kori kya haal hai jaldi,chat
+start यूट्यूब,open_app
+ଇଣ୍ଟରନେଟ୍ ଚାଲୁଛି କି,device_info
+ଏହାର ନାମ କଣ,camera_identify
+kori good night kori ji,chat
+କ୍ରୋମ୍ ଖୋଲ,open_app
+ହ୍ୱାଟସଆପ୍ ଖୋଲ,open_app
+hey kori is the internet working please,device_info
+good morning na,chat
+kori पापा को कॉल लगाओ na,call
+i am busy for 5 minutes jaldi,away_on
+शुक्रिया,chat
+hey kori ନମସ୍କାର ji,chat
+ek timer 7 minute ka lagao,timer
+sleep mode na,stop_assistant
+kori ଭାଇକୁ ମେସେଜ୍ ପଠାଅ na,message
+set a timer for 20 minutes,timer
+remind me in 15 minutes,timer
+zara scan this object jaldi,camera_identify
+shaam 8 baje alarm lagana,alarm
+please go back to the previous song,music
+tell me what this is,camera_identify
+please namaste ji,chat
+hey kori ଶୁଭ ସକାଳ na,chat
+flashlight on,flashlight
+turn the volume down,volume
+12 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+hey kori send a message to rahul saying i am late ji,message
+ମ୍ୟୁଟ୍ କର please,volume
+kori ମୁଁ ଗାଡି ଚଳାଉଛି,driving_on
+find cheap flights ji,web_search
+hey kori रुक जाओ na,stop_assistant
+व्हाट्सएप khol do,open_app
+kori टॉर्च बंद करो na,flashlight
+zara म्यूट करो please,volume
+hey kori ଟର୍ଚ୍ଚ ବନ୍ଦ କର,flashlight
+hey kori सो जाओ ji,stop_assistant
+please open स्पॉटिफाई for me,open_app
+phone mom ji,call
+hey kori सोने का भाव क्या है na,question
+ଏହା କଣ ଅଟେ,camera_identify
+gallery ଖୋଲ,open_app
+open टेलीग्राम,open_app
+please open କ୍ୟାମେରା for me,open_app
+google karo ji,web_search
+please what is the price of gold today jaldi,question
+search for best phones under twenty thousand ji,web_search
+launch spotify,open_app
+zara मैं 10 मिनट के लिए बिजी हूं na,away_on
+timer for 10 minutes please,timer
+hey kori main pahunch gaya na,driving_off
+ek timer 20 minute ka lagao,timer
+identify this na,camera_identify
+start telegram,open_app
+start a 10 minute timer,timer
+30 minute baad yaad dilana,timer
+please open कैमरा for me,open_app
+ye kya hai jaldi,camera_identify
+ଗାଡି ଚଳାଇବା ବନ୍ଦ,driving_off
+hey kori play arijit singh songs on youtube jaldi,youtube
+please tell me a joke na,chat
+main 30 minute ke liye busy hoon please,away_on
+କେମିତି ଅଛ ji,chat
+please सुप्रभात jaldi,chat
+zara find cheap flights ji,web_search
+launch paytm,open_app
+zara main wapas aa gaya,away_off
+instagram ଖୋଲ,open_app
+zara away mode off na,away_off
+zara 15 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ jaldi,away_on
+अलार्म लगाओ 10 बजे,alarm
+youtube open karo,open_app
+start maps,open_app
+please how are you,chat
+start କ୍ୟାମେରା,open_app
+zara what is my battery level na,device_info
+टॉर्च जलाओ,flashlight
+सुबह 6 बजे का अलार्म लगाओ,alarm
+zara आज मौसम कैसा है jaldi,question
+टॉर्च जलाओ ji,flashlight
+zara resume the song na,music
+amit ko bolo ki kal milte hain na,message
+settings open karo,open_app
+kori you are great,chat
+instagram kholo,open_app
+kori ଭାଇକୁ ଫୋନ୍ ଲଗାଅ jaldi,call
+mai gaadi chala raha hu,driving_on
+45 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+battery ka status batao,device_info
+please away mode off jaldi,away_off
+please क्या हाल है na,chat
+youtube kholo,open_app
+please agla gaana lagao,music
+hey kori torch on karo ji,flashlight
+गाना रोको,music
+hey kori flashlight band karo please,flashlight
+start स्पॉटिफाई,open_app
+please thank you,chat
+please turn the volume down please,volume
+main pahunch gaya ji,driving_off
+set an alarm for 10 am,alarm
+set alarm for 11:15 in the morning,alarm
+kori chup raho na,stop_assistant
+what is this object in my hand,camera_identify
+zara switch off the torch jaldi,flashlight
+kori search best restaurants,web_search
+please मैं टॉयलेट जा रहा हूं na,game_break
+what is this thing in front of me,camera_identify
+kori phone ko chup kara do please,volume
+snapchat open karo,open_app
+hey kori क्रिकेट मैच कौन जीता,question
+hey kori search cooking videos on youtube please,youtube
+open chrome,open_app
+hey kori i am going to the toilet please,game_break
+कैमरा khol do,open_app
+hey kori what is this thing in front of me please,camera_identify
+set a timer for 15 minutes,timer
+ଇଣ୍ଟରନେଟ୍ ରେ ଖୋଜ,web_search
+hey kori ଭଲ୍ୟୁମ୍ ବଢ଼ାଅ,volume
+settings kholo,open_app
+please ମୁଁ ଗାଡି ଚଳାଉଛି,driving_on
+hey kori hello na,chat
+please stop listening,stop_assistant
+kori what am i looking at jaldi,camera_identify
+telegram khol do,open_app
+start ୟୁଟ୍ୟୁବ୍,open_app
+switch on the flashlight,flashlight
+please what animal is this please,camera_identify
+kori previous song jaldi,music
+what kind of plant is this please,camera_identify
+please search best restaurants jaldi,web_search
+kori flashlight chalu karo jaldi,flashlight
+30 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+turn off the torch,flashlight
+zara amazon par shoes dhundo please,shop
+gaana chalao,music
+start a 3 minute timer,timer
+timer for 2 minutes please,timer
+अलार्म लगाओ 7 बजे,alarm
+is it going to rain today jaldi,question
+zara tell me a story na,chat
+ଟାଇମର୍ 15 ମିନିଟ୍ ସେଟ୍ କର,timer
+drive mode off kar do,driving_off
+google the nearest hospital,web_search
+zara main gaadi chala raha hoon,driving_on
+ବାପାଙ୍କୁ ଫୋନ୍ କର,call
+please ye kya hai jaldi,camera_identify
+start कैमरा,open_app
+open telegram,open_app
+କ୍ୟାମେରା open karo,open_app
+hey kori gaming mode ji,game_break
+please what is my battery level jaldi,device_info
+hey kori ଆମାଜନ୍ ରେ ଜୋତା ଖୋଜ,shop
+start a 12 minute timer,timer
+start paytm,open_app
+पिछला गाना,music
+नमस्ते,chat
+play the next track,music
+hey kori latest news about cricket ji,question
+kori what is this please,camera_identify
+open मैप्स,open_app
+zara drive mode off kar do please,driving_off
+अलार्म लगाओ 9 बजे,alarm
+kori सुप्रभात jaldi,chat
+20 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+ye kya hai,camera_identify
+start gmail,open_app
+hey kori main 15 minute ke liye busy hoon please,away_on
+please अमेज़न पर जूते ढूंढो please,shop
+search karo,web_search
+please send sms to amit hello jaldi,message
+ଆଜି ପାଗ କେମିତି ଅଛି,question
+7 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+3 minute baad yaad dilana,timer
+zara explain quantum computing simply,question
+ड्राइविंग बंद na,driving_off
+ड्राइविंग मोड चालू करो,driving_on
+please what is the price of gold today ji,question
+please that's all thanks stop ji,stop_assistant
+7 बजे उठा देना,alarm
+गाड़ी रोक दी,driving_off
+i am busy for 5 minutes,away_on
+कैमरा open karo,open_app
+zara i am busy for 30 minutes please,away_on
+ଚୁପ୍ ହୁଅ,stop_assistant
+alarm at 7 pm,alarm
+zara drive mode chalu karo,driving_on
+kori next song please,music
+gmail kholo,open_app
+गैलरी खोलो,open_app
+यूट्यूब पर गाना चलाओ ji,youtube
+gaana pause karo,music
+hey kori main toilet ja raha hoon please,game_break
+zara बस करो jaldi,stop_assistant
+launch chrome,open_app
+kori ମୁଁ ଫେରିଆସିଲି na,away_off
+ଖୋଜ ସର୍ବୋତ୍ତମ ଫୋନ୍ na,web_search
+hey kori ଏହା କେଉଁ ଫୁଲ please,camera_identify
+youtube pe song chalao please,youtube
+aaj barish hogi kya,question
+camera khol do,open_app
+open maps,open_app
+open क्रोम,open_app
+इंटरनेट चल रहा है क्या ji,device_info
+game break,game_break
+isse pehchano jaldi,camera_identify
+zara मम्मी को व्हाट्सएप करो jaldi,message
+45 मिनट बाद बताना,timer
+kori ये कौन सा फूल है na,camera_identify
+chrome khol do,open_app
+phonepe khol do,open_app
+hello,chat
+start मैप्स,open_app
+set a timer for 3 minutes,timer
+व्हाट्सएप kholo,open_app
+please isse pehchano please,camera_identify
+hey kori google the nearest hospital please,web_search
+mujhe 30 minute disturb mat karna,away_on
+calculator khol do,open_app
+मैं 30 मिनट के लिए बिजी हूं,away_on
+यूट्यूब खोलो,open_app
+zara मैं 15 मिनट के लिए बिजी हूं please,away_on
+hey kori राहुल को मैसेज भेजो कि मैं लेट हूं ji,message
+who won the match yesterday,question
+gaming mode please,game_break
+kori ghar phone lagao na,call
+zara away mode on for 15 minutes please,away_on
+am i connected to wifi,device_info
+i am back,away_off
+launch camera,open_app
+snapchat ଖୋଲ,open_app
+hey kori turn on the flashlight please,flashlight
+अलार्म लगाओ 5 बजे,alarm
+ଫ୍ଲାଶଲାଇଟ୍ ବନ୍ଦ କର,flashlight
+instagram open karo,open_app
+zara पिछला गाना na,music
+open calculator,open_app
+start କ୍ରୋମ୍,open_app
+gallery open karo,open_app
+away mode on for 5 minutes,away_on
+torch off kar do,flashlight
+hey kori गाड़ी रोक दी na,driving_off
+timer for 15 minutes please,timer
+launch gallery,open_app
+please ring amit na,call
+please ଆଜିର ଖବର କୁହ na,question
+countdown 7 minutes,timer
+please ye kya hai,camera_identify
+taj mahal kab bana tha,question
+find cheap flights,web_search
+kori इसका नाम क्या है na,camera_identify
+kori doctor ko call karo please,call
+zara ye kaun sa phool hai please,camera_identify
+hey kori check my internet connection jaldi,device_info
+zara play the next track please,music
+remind me in 25 minutes,timer
+please dhanyavaad na,chat
+mummy ko whatsapp karo ki main aa raha hoon,message
+please open telegram for me,open_app
+how tall is mount everest,question
+please ଇଣ୍ଟରନେଟ୍ ରେ ଖୋଜ na,web_search
+please open फेसबुक for me,open_app
+zara do not disturb for two minutes na,game_break
+please main toilet ja raha hoon na,game_break
+please आज मौसम कैसा है,question
+hey kori ଶୋଇପଡ଼,stop_assistant
+zara what is the weather in bhubaneswar ji,question
+chup raho,stop_assistant
+please gaana band karo na,music
+zara mute the phone please,volume
+zara battery status ji,device_info
+open ଇନଷ୍ଟାଗ୍ରାମ୍,open_app
+camera kholo,open_app
+subah 5 baje ka alarm lagao,alarm
+kori i'm done driving,driving_off
+tell me a story na,chat
+timer lagao 25 minute,timer
+hey kori ye kya fal hai,camera_identify
+hey kori identify this na,camera_identify
+ek timer 45 minute ka lagao,timer
+जीमेल khol do,open_app
+kori agla gana,music
+search how to tie a tie jaldi,web_search
+please ଆଗକୁ ଗୀତ na,music
+spotify open karo,open_app
+kori bas karo jaldi,stop_assistant
+bhai ko phone karo,call
+hey kori मैं गाड़ी चला रहा हूं,driving_on
+hey kori mujhe 10 minute disturb mat karna jaldi,away_on
+କ୍ୟାମେରା ଖୋଲ,open_app
+kori make it louder ji,volume
+ଟାଇମର୍ 30 ମିନିଟ୍ ସେଟ୍ କର,timer
+set a timer for 45 minutes,timer
+please i am back ji,away_off
+kori hello,chat
+zara good evening,chat
+turn off the torch ji,flashlight
+यूट्यूब kholo,open_app
+what animal is this,camera_identify
+kori main drive kar raha hoon please,driving_on
+countdown 10 minutes,timer
+papa ko call lagao na,call
+torch band karo,flashlight
+settings खोलो,open_app
+11 बजे उठा देना,alarm
+please send sms to amit hello na,message
+yeh kya cheez hai na,camera_identify
+ସକାଳ 6 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+gaming mode,game_break
+hey kori gaana pause karo ji,music
+zara agla gana,music
+set an alarm for 8 am,alarm
+please i am busy for 15 minutes na,away_on
+who is the prime minister of india,question
+hey kori battery ka status batao,device_info
+क्रोम khol do,open_app
+ବାପାଙ୍କୁ ମେସେଜ୍ କର please,message
+search best restaurants jaldi,web_search
+kori कैसे हो please,chat
+मैं टॉयलेट जा रहा हूं,game_break
+launch calculator,open_app
+youtube khol do,open_app
+what is the price of gold today,question
+zara ye kaun sa jaanwar hai jaldi,camera_identify
+टेलीग्राम ଖୋଲ,open_app
+kori ड्राइविंग मोड बंद करो na,driving_off
+maps ଖୋଲ,open_app
+zara गाना बंद करो please,music
+please who wrote the ramayana please,question
+instagram खोलो,open_app
+chrome kholo,open_app
+away mode on for 10 minutes,away_on
+launch यूट्यूब,open_app
+hey kori सोने का भाव क्या है please,question
+what is my battery level,device_info
+टाइमर सेट करो 5 मिनट के लिए,timer
+hey kori फ्लैशलाइट चालू करो ji,flashlight
+please इंटरनेट पर खोजो please,web_search
+hey kori ମ୍ୟୁଟ୍ କର na,volume
+please gaana chalao ji,music
+zara turn off the torch,flashlight
+kori what animal is this na,camera_identify
+hey kori hi kori ji,chat
+set a timer for 2 minutes,timer
+बंद करो,stop_assistant
+please agla gana please,music
+କ୍ରୋମ୍ kholo,open_app
+zara arijit ke gaane youtube par chalao,youtube
+hey kori ଚୁପ୍ ହୁଅ,stop_assistant
+ଭାଇକୁ ଫୋନ୍ ଲଗାଅ,call
+hey kori खोजो सबसे अच्छा फोन please,web_search
+please बस करो,stop_assistant
+please internet par search karo recipes jaldi,web_search
+kori you are great jaldi,chat
+i'm done driving,driving_off
+सेटिंग खोलो,open_app
+open paytm,open_app
+launch ହ୍ୱାଟସଆପ୍,open_app
+kori awaaz tez karo na,volume
+zara agla gaana lagao ji,music
+8 बजे उठा देना,alarm
+please open क्रोम for me,open_app
+ସକାଳ 5 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+ड्राइविंग बंद jaldi,driving_off
+5 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+flashlight on jaldi,flashlight
+kori गाना चलाओ ji,music
+alarm set karo 10 baje,alarm
+launch snapchat,open_app
+ଫ୍ଲାଶଲାଇଟ୍ ଚାଲୁ କର,flashlight
+shukriya,chat
+ଭଲ୍ୟୁମ୍ ବଢ଼ାଅ,volume
+torch jalao ji,flashlight
+kya haal hai,chat
+zara am i connected to wifi,device_info
+please open यूट्यूब for me,open_app
+please lower the volume ji,volume
+hey kori आज मौसम कैसा है jaldi,question
+camera open karo,open_app
+zara ଏହାକୁ ଚିହ୍ନାଅ ji,camera_identify
+zara volume up jaldi,volume
+zara what can you do please,chat
+hey kori बस करो jaldi,stop_assistant
+ghar phone lagao,call
+zara बस रुको please,stop_assistant
+make it louder,volume
+30 मिनट का टाइमर लगाओ,timer
+hey kori cricket match kaun jeeta,question
+order a phone cover,shop
+please mute kar do jaldi,volume
+turn on the flashlight ji,flashlight
+ୟୁଟ୍ୟୁବ୍ kholo,open_app
+volume kam karo,volume
+zara increase the volume jaldi,volume
+remind me in 30 minutes,timer
+kori stop,stop_assistant
+zara scan this object please,camera_identify
+skip this song please,music
+do not disturb for two minutes,game_break
+what can you do,chat
+kori main 5 minute ke liye busy hoon ji,away_on
+who wrote the ramayana,question
+zara battery kitna bacha hai please,device_info
+please ଗାଡି ଚଳାଇବା ବନ୍ଦ na,driving_off
+please ୟୁଟ୍ୟୁବ୍ ରେ ଗୀତ ଚଳାଅ jaldi,youtube
+dial papa,call
+kori ଫୋନ୍ ଖୋଜ ji,web_search
+मैं पहुंच गया,driving_off
+zara torch band karo,flashlight
+battery percentage,device_info
+please skip this song please,music
+please i am busy for 10 minutes,away_on
+countdown 15 minutes,timer
+zara आवाज़ बढ़ाओ,volume
+सुप्रभात,chat
+फ्लैशलाइट बंद करो jaldi,flashlight
+sunna band karo jaldi,stop_assistant
+जीमेल open karo,open_app
+driving mode off,driving_off
+hey kori what is the price of gold today na,question
+rahul ko message bhejo ki main late hoon jaldi,message
+is it going to rain today,question
+zara ଏହାର ନାମ କଣ jaldi,camera_identify
+15 मिनट का टाइमर लगाओ,timer
+start कैलकुलेटर,open_app
+away mode on for 15 minutes,away_on
+10 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ please,away_on
+please call my brother jaldi,call
+rahul ko message bhejo ki main late hoon ji,message
+please open calculator for me,open_app
+kori play music ji,music
+zara ବାପାଙ୍କୁ ମେସେଜ୍ କର jaldi,message
+zara rahul ko call karo ji,call
+मैप्स खोलो,open_app
+zara bhai ko phone karo ji,call
+kori who are you na,chat
+kori ye kaun sa phool hai ji,camera_identify
+telegram खोलो,open_app
+flashlight chalu karo,flashlight
+zara buy running shoes on amazon please,shop
+zara battery ka status batao please,device_info
+awaaz kam karo ji,volume
+set an alarm for 11 am,alarm
+hey kori ମ୍ୟୁଟ୍ କର jaldi,volume
+start calculator,open_app
+hey kori band karo na,stop_assistant
+previous song,music
+shaam 9 baje alarm lagana,alarm
+please open facebook for me,open_app
+paytm open karo,open_app
+व्हाट्सएप खोलो,open_app
+please away mode on for 15 minutes,away_on
+alarm at 10 pm,alarm
+switch on the flashlight ji,flashlight
+whatsapp खोलो,open_app
+kori torch on na,flashlight
+please kaise ho ji,chat
+ଓଡ଼ିଶାର ରାଜଧାନୀ କଣ,question
+hey kori battery status,device_info
+open gmail,open_app
+countdown 30 minutes,timer
+hey kori buy running shoes on amazon na,shop
+ଟର୍ଚ୍ଚ ବନ୍ଦ କର,flashlight
+call home,call
+hey kori ड्राइविंग मोड ऑन please,driving_on
+30 minute ka timer set karo,timer
+main gaadi chala raha hoon ji,driving_on
+hey kori whatsapp mom that i am coming na,message
+please sone ka rate kya hai ji,question
+youtube खोलो,open_app
+hey kori taj mahal kab bana tha please,question
+kori search how to tie a tie,web_search
+hey kori internet par search karo recipes jaldi,web_search
+5 minute baad yaad dilana,timer
+zara ड्राइविंग मोड ऑन ji,driving_on
+अलार्म लगाओ 11 बजे,alarm
+tell me a joke ji,chat
+mute kar do,volume
+sleep mode,stop_assistant
+alarm at 8 pm,alarm
+please open ହ୍ୱାଟସଆପ୍ for me,open_app
+alarm set karo 12 baje,alarm
+please open सेटिंग for me,open_app
+please awaaz kam karo ji,volume
+hey kori chup ho jao jaldi,stop_assistant
+set a timer for 30 minutes,timer
+10 मिनट बाद बताना,timer
+zara am i connected to wifi jaldi,device_info
+zara गाड़ी रोक दी ji,driving_off
+dhanyavaad,chat
+internet par search karo recipes,web_search
+मैप्स khol do,open_app
+hey kori 5 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ na,away_on
+kori go to sleep na,stop_assistant
+kori ଟର୍ଚ୍ଚ ବନ୍ଦ କର jaldi,flashlight
+gmail ଖୋଲ,open_app
+search for best phones under twenty thousand,web_search
+म्यूट करो,volume
+2 minute baad yaad dilana,timer
+ସକାଳ 7 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+क्या हाल है jaldi,chat
+zara mute kar do na,volume
+kori ଗୀତ ବନ୍ଦ କର na,music
+राहुल को कॉल करो,call
+ek timer 15 minute ka lagao,timer
+kori who is the prime minister of india,question
+timer lagao 3 minute,timer
+please battery kitni hai na,device_info
+सुनना बंद करो,stop_assistant
+start इंस्टाग्राम,open_app
+zara mujhe 30 minute disturb mat karna na,away_on
+zara mummy ko phone lagao na,call
+shaam 10 baje alarm lagana,alarm
+hey kori सर्च करो सबसे अच्छा फोन ji,web_search
+zara amit ko bolo ki kal milte hain please,message
+मैं 10 मिनट के लिए बिजी हूं,away_on
+please ड्राइविंग मोड ऑफ करो ji,driving_off
+मैं गाड़ी चला रहा हूं na,driving_on
+hey kori battery percentage ji,device_info
+please volume badhao na,volume
+start गैलरी,open_app
+turn on the flashlight,flashlight
+kori switch off the torch please,flashlight
+chrome open karo,open_app
+ye kaun sa phool hai jaldi,camera_identify
+स्पॉटिफाई खोलो,open_app
+2 minute ka timer set karo,timer
+hey kori youtube par bhajan lagao please,youtube
+अलार्म लगाओ 6 बजे,alarm
+kori volume up na,volume
+zara ମୁଁ ପହଞ୍ଚି ଗଲି jaldi,driving_off
+remind me in 7 minutes,timer
+10 बजे उठा देना,alarm
+अलार्म लगाओ 12 बजे,alarm
+hey kori ruk jao na,stop_assistant
+kori ମୋ ଭାଇକୁ କଲ୍ କର,call
+ଭଲ୍ୟୁମ୍ କମାଅ jaldi,volume
+kori increase the volume jaldi,volume
+hey kori what is my battery level na,device_info
+text papa that i reached,message
+amazon par shoes dhundo,shop
+please open instagram for me,open_app
+please drive mode band karo,driving_off
+ଟାଇମର୍ 7 ମିନିଟ୍ ସେଟ୍ କର,timer
+kori 30 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+ହ୍ୱାଟସଆପ୍ खोलो,open_app
+kori 5 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ ji,away_on
+open स्पॉटिफाई,open_app
+set alarm for 8:15 in the morning,alarm
+यूट्यूब khol do,open_app
+timer lagao 10 minute,timer
+launch फेसबुक,open_app
+mute na,volume
+paytm kholo,open_app
+फ्लैशलाइट चालू करो,flashlight
+ek timer 5 minute ka lagao,timer
+please what is this thing in front of me jaldi,camera_identify
+i am going to the toilet jaldi,game_break
+launch ୟୁଟ୍ୟୁବ୍,open_app
+hey kori ଏହା କେଉଁ ଫୁଲ na,camera_identify
+what is the capital of france,question
+इंटरनेट पर खोजो,web_search
+check my internet connection,device_info
+amazon par shoes dhundo jaldi,shop
+search headphones on flipkart ji,shop
+away mode on for 30 minutes,away_on
+hey kori ମୋତେ ଏକ ଗପ କୁହ please,chat
+kori i'm driving right now jaldi,driving_on
+kori ଇଣ୍ଟରନେଟ୍ ଚାଲୁଛି କି ji,device_info
+find hotels near me,web_search
+buy running shoes on amazon,shop
+hey kori drive mode off kar do please,driving_off
+snapchat khol do,open_app
+please who are you,chat
+main drive kar raha hoon,driving_on
+gallery खोलो,open_app
+hey kori main 5 minute ke liye busy hoon jaldi,away_on
+please who are you jaldi,chat
+kori कैसे हो ji,chat
+kori बंद करो,stop_assistant
+timer for 5 minutes please,timer
+call home ji,call
+zara torch off kar do,flashlight
+zara stop listening please,stop_assistant
+कैलकुलेटर ଖୋଲ,open_app
+hey kori gaadi rok di hai jaldi,driving_off
+please stop the music,music
+google karo best laptop jaldi,web_search
+टेलीग्राम kholo,open_app
+ଇନଷ୍ଟାଗ୍ରାମ୍ khol do,open_app
+अलार्म लगाओ 8 बजे,alarm
+please बैटरी कितनी है please,device_info
+45 minute baad yaad dilana,timer
+please भारत के प्रधानमंत्री कौन हैं jaldi,question
+hey kori yeh kya cheez hai ji,camera_identify
+ଏହାକୁ ଚିହ୍ନାଅ,camera_identify
+i am busy for 30 minutes jaldi,away_on
+please play lofi music on youtube ji,youtube
+kori what is this,camera_identify
+hey kori agla gaana lagao na,music
+please वॉल्यूम बढ़ाओ ji,volume
+ye kaun sa phool hai please,camera_identify
+सुबह 8 बजे का अलार्म लगाओ,alarm
+kori main ghar pahunch gaya na,driving_off
+mujhe 5 minute disturb mat karna,away_on
+timer for 3 minutes please,timer
+ଡ୍ରାଇଭିଂ ମୋଡ୍ ଚାଲୁ କର please,driving_on
+start a 20 minute timer,timer
+hey kori ये कौन सा फूल है ji,camera_identify
+zara ଆଜିର ଖବର କୁହ,question
+agla gaana lagao,music
+countdown 2 minutes,timer
+zara पिछला गाना please,music
+i'm available now,away_off
+zara call my brother na,call
+सुनना बंद करो jaldi,stop_assistant
+start a 2 minute timer,timer
+ମୋ ଭାଇକୁ କଲ୍ କର,call
+hey kori volume badhao ji,volume
+zara i'm available now ji,away_off
+आवाज़ कम करो jaldi,volume
+timer for 7 minutes please,timer
+explain quantum computing simply,question
+zara look up train timings,web_search
+hey kori tell me your abilities please,chat
+kori battery percentage na,device_info
+open ୟୁଟ୍ୟୁବ୍,open_app
+kori ଥମିଯାଅ na,stop_assistant
+टेलीग्राम open karo,open_app
+hey kori म्यूट करो please,volume
+paytm khol do,open_app
+kori mujhe 5 minute disturb mat karna jaldi,away_on
+mujhe 7 baje utha dena,alarm
+ଇନଷ୍ଟାଗ୍ରାମ୍ ଖୋଲ,open_app
+zara मैं पहुंच गया jaldi,driving_off
+calculator kholo,open_app
+mujhe 9 baje utha dena,alarm
+open कैलकुलेटर,open_app
+ଫ୍ଲାଶଲାଇଟ୍ ଚାଲୁ କର please,flashlight
+zara भाई को फोन करो,call
+maps open karo,open_app
+mujhe 5 baje utha dena,alarm
+hey kori reply to the last message jaldi,message
+chrome खोलो,open_app
+hey kori go back to the previous song ji,music
+kori rahul ko call karo ji,call
+zara ବ୍ୟାଟେରୀ କେତେ ଅଛି please,device_info
+please call my brother please,call
+please find hotels near me,web_search
+please dial papa na,call
+please bharat ki rajdhani kya hai jaldi,question
+ମୁଁ ଗାଡି ଚଳାଉଛି,driving_on
+kori मैं 30 मिनट के लिए बिजी हूं please,away_on
+zara मम्मी को फोन लगाओ,call
+kori thank you please,chat
+who won the match yesterday jaldi,question
+hey kori ଶୁଣିବା ବନ୍ଦ କର jaldi,stop_assistant
+12 minute ka timer set karo,timer
+whatsapp khol do,open_app
+ଆଗକୁ ଗୀତ,music
+kori भाई को फोन करो na,call
+kori ମୋ ଭାଇକୁ କଲ୍ କର na,call
+टाइमर सेट करो 15 मिनट के लिए,timer
+मैं 30 मिनट के लिए बिजी हूं please,away_on
+hey kori sone ka rate kya hai,question
+launch मैप्स,open_app
+main wapas aa gaya,away_off
+please open youtube for me,open_app
+zara mujhe 15 minute disturb mat karna please,away_on
+kori torch off kar do jaldi,flashlight
+please ଗାଡି ଚଳାଇବା ବନ୍ଦ ji,driving_off
+rahul ko message bhejo ki main late hoon,message
+please open କ୍ରୋମ୍ for me,open_app
+zara इसे पहचानो na,camera_identify
+zara बैटरी कितनी है please,device_info
+chrome ଖୋଲ,open_app
+ड्राइविंग मोड बंद करो na,driving_off
+please what is this object in my hand jaldi,camera_identify
+set alarm for 5:15 in the morning,alarm
+launch facebook,open_app
+hey kori away mode on for 5 minutes na,away_on
+zara text papa that i reached na,message
+please ଏହା କଣ ଅଟେ jaldi,camera_identify
+zara राहुल को कॉल करो please,call
+please मैं 5 मिनट के लिए बिजी हूं jaldi,away_on
+ଏହା କଣ ଅଟେ ji,camera_identify
+zara doctor ko call karo ji,call
+zara tell me a story ji,chat
+alarm at 11 pm,alarm
+maps khol do,open_app
+ଟାଇମର୍ 10 ମିନିଟ୍ ସେଟ୍ କର,timer
+volume kam karo jaldi,volume
+please shukriya please,chat
+स्पॉटिफाई kholo,open_app
+please i'm available now na,away_off
+10 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+telegram open karo,open_app
+hey kori google karo please,web_search
+ड्राइविंग मोड बंद करो please,driving_off
+camera खोलो,open_app
+launch instagram,open_app
+क्रोम ଖୋଲ,open_app
+main 30 minute ke liye busy hoon,away_on
+sone ka rate kya hai,question
+hey kori phone ko chup kara do jaldi,volume
+zara अगला गाना ji,music
+कैलकुलेटर खोलो,open_app
+hey kori game break na,game_break
+phonepe kholo,open_app
+launch settings,open_app
+kori ଆମାଜନ୍ ରେ ଜୋତା ଖୋଜ ji,shop
+zara what kind of plant is this please,camera_identify
+please what is this thing in front of me please,camera_identify
+kori मैं 10 मिनट के लिए बिजी हूं please,away_on
+stop the music,music
+गैलरी open karo,open_app
+please torch on karo please,flashlight
+launch जीमेल,open_app
+flashlight off,flashlight
+7 minute ka timer set karo,timer
+3 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+टाइमर सेट करो 2 मिनट के लिए,timer
+internet chal raha hai kya jaldi,device_info
+ଟର୍ଚ୍ଚ ଜଳାଅ jaldi,flashlight
+main wapas aa gaya ji,away_off
+क्रोम kholo,open_app
+please ଧନ୍ୟବାଦ na,chat
+set alarm for 9:15 in the morning,alarm
+battery kitni hai,device_info
+please awaaz tez karo,volume
+i am back jaldi,away_off
+what kind of plant is this,camera_identify
+hey kori gaana roko jaldi,music
+search karo please,web_search
+मम्मी को फोन लगाओ jaldi,call
+is the internet working,device_info
+बैटरी कितनी है,device_info
+kori ଫ୍ଲାଶଲାଇଟ୍ ବନ୍ଦ କର na,flashlight
+ଡ୍ରାଇଭିଂ ମୋଡ୍ ଚାଲୁ କର,driving_on
+15 minute ka timer set karo,timer
+alarm set karo 11 baje,alarm
+open फेसबुक,open_app
+zara battery status na,device_info
+kori ବାପାଙ୍କୁ ମେସେଜ୍ କର please,message
+zara chup raho na,stop_assistant
+timer lagao 45 minute,timer
+google karo best laptop,web_search
+open snapchat,open_app
+whatsapp ଖୋଲ,open_app
+launch टेलीग्राम,open_app
+zara ଓଡ଼ିଶାର ରାଜଧାନୀ କଣ na,question
+ଧନ୍ୟବାଦ,chat
+please ବାପାଙ୍କୁ ଫୋନ୍ କର,call
+ଟାଇମର୍ 2 ମିନିଟ୍ ସେଟ୍ କର,timer
+ये क्या है,camera_identify
+papa ko sms bhejo,message
+mummy ko phone lagao,call
+zara pichla gaana,music
+फेसबुक open karo,open_app
+check my internet connection please,device_info
+facebook kholo,open_app
+please ମାଙ୍କୁ କଲ୍ କର jaldi,call
+hey kori latest news about cricket jaldi,question
+क्रिकेट मैच कौन जीता ji,question
+सुबह 10 बजे का अलार्म लगाओ,alarm
+zara drive mode band karo,driving_off
+kori search headphones on flipkart,shop
+resume the song,music
+arijit ke gaane youtube par chalao,youtube
+kori ଫୋନ୍ ଖୋଜ na,web_search
+सुबह 11 बजे का अलार्म लगाओ,alarm
+ड्राइविंग मोड ऑन,driving_on
+timer lagao 2 minute,timer
+alarm set karo 9 baje,alarm
+रुक जाओ,stop_assistant
+torch on,flashlight
+open settings,open_app
+ଏହାର ନାମ କଣ na,camera_identify
+wake me up at 8:30,alarm
+kori ଭାଇକୁ ଫୋନ୍ ଲଗାଅ ji,call
+i am back please,away_off
+zara मैं टॉयलेट जा रहा हूं please,game_break
+that's all thanks stop,stop_assistant
+mujhe 10 minute disturb mat karna,away_on
+ଶୋଇପଡ଼,stop_assistant
+agla gana,music
+hey kori ये क्या है please,camera_identify
+zara namaste please,chat
+ruk jao,stop_assistant
+zara flashlight off na,flashlight
+phone mom,call
+kori गाना बंद करो please,music
+timer for 30 minutes please,timer
+please ବ୍ୟାଟେରୀ କେତେ ଅଛି na,device_info
+i am going to the toilet,game_break
+टाइमर सेट करो 30 मिनट के लिए,timer
+ଗୀତ ଚଳାଅ,music
+please who wrote the ramayana na,question
+kori drive mode off kar do ji,driving_off
+launch telegram,open_app
+open କ୍ରୋମ୍,open_app
+जीमेल खोलो,open_app
+start settings,open_app
+kori pause the music please,music
+main gaadi chala raha hoon,driving_on
+please सोने का भाव क्या है,question
+kori i am busy for 5 minutes jaldi,away_on
+hey kori go to sleep,stop_assistant
+band karo,stop_assistant
+टाइमर सेट करो 3 मिनट के लिए,timer
+youtube par bhajan lagao,youtube
+send sms to amit hello,message
+kori अगला गाना jaldi,music
+व्हाट्सएप ଖୋଲ,open_app
+battery ka status batao please,device_info
+zara सर्च करो सबसे अच्छा फोन na,web_search
+please ଥମିଯାଅ,stop_assistant
+10 minute baad yaad dilana,timer
+phonepe open karo,open_app
+zara lower the volume,volume
+kori awaaz badhao na,volume
+please open टेलीग्राम for me,open_app
+please ଡ୍ରାଇଭିଂ ମୋଡ୍ ବନ୍ଦ କର jaldi,driving_off
+hey kori 15 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+zara bas karo please,stop_assistant
+ଭାଇକୁ ମେସେଜ୍ ପଠାଅ,message
+kori what is the weather in bhubaneswar,question
+kori फ्लैशलाइट बंद करो,flashlight
+hey kori scan this object,camera_identify
+kori how tall is mount everest na,question
+away mode on for 10 minutes na,away_on
+start सेटिंग,open_app
+please ମାଙ୍କୁ କଲ୍ କର ji,call
+ड्राइविंग बंद,driving_off
+stop please,stop_assistant
+torch on karo,flashlight
+गाना रोको ji,music
+सुबह 12 बजे का अलार्म लगाओ,alarm
+switch on the flashlight please,flashlight
+next song,music
+battery kitni hai jaldi,device_info
+make it louder please,volume
+mujhe 6 baje utha dena,alarm
+please open मैप्स for me,open_app
+please गाना चलाओ jaldi,music
+hey kori good evening jaldi,chat
+wake me up at 12:30,alarm
+ବ୍ୟାଟେରୀ କେତେ ଅଛି,device_info
+mujhe 30 minute disturb mat karna na,away_on
+snapchat kholo,open_app
+10 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+start facebook,open_app
+खोजो सबसे अच्छा फोन jaldi,web_search
+कैमरा खोलो,open_app
+kori turn on the flashlight,flashlight
+kori look up train timings please,web_search
+please ପରବର୍ତ୍ତୀ ଗୀତ ଚଳାଅ jaldi,music
+kori drive mode band karo please,driving_off
+please open गैलरी for me,open_app
+8 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+please taj mahal kab bana tha ji,question
+इंटरनेट चल रहा है क्या jaldi,device_info
+ଧନ୍ୟବାଦ please,chat
+मैप्स kholo,open_app
+zara search karo,web_search
+12 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+please ମୋତେ ଏକ ଗପ କୁହ jaldi,chat
+kori फ्लैशलाइट चालू करो ji,flashlight
+please kaise ho,chat
+ଆଜି ପାଗ କେମିତି ଅଛି na,question
+volume down please,volume
+launch स्पॉटिफाई,open_app
+kori away mode on for 10 minutes ji,away_on
+kori gaana chalao ji,music
+zara नमस्ते na,chat
+tell me a story,chat
+driving mode on,driving_on
+timer for 45 minutes please,timer
+please बंद करो na,stop_assistant
+kori is the internet working please,device_info
+ଶୁଣିବା ବନ୍ଦ କର jaldi,stop_assistant
+kori bas karo,stop_assistant
+please main ghar pahunch gaya please,driving_off
+ଫୋନ୍ ଖୋଜ,web_search
+गैलरी khol do,open_app
+sunna band karo,stop_assistant
+ମ୍ୟୁଟ୍ କର,volume
+hey kori papa ko sms bhejo jaldi,message
+i'm driving right now,driving_on
+20 मिनट बाद बताना,timer
+zara इसे पहचानो please,camera_identify
+kori driving mode off na,driving_off
+yeh kya cheez hai,camera_identify
+hey kori amit ko bolo ki kal milte hain jaldi,message
+zara flashlight on please,flashlight
+kori sone ka rate kya hai jaldi,question
+କ୍ୟାମେରା khol do,open_app
+search how to tie a tie,web_search
+kori नमस्ते please,chat
+please राहुल को मैसेज भेजो कि मैं लेट हूं please,message
+timer lagao 20 minute,timer
+youtube pe song chalao,youtube
+countdown 12 minutes,timer
+hey kori how much battery is left ji,device_info
+ये कौन सा फूल है,camera_identify
+ମୁଁ ପହଞ୍ଚି ଗଲି jaldi,driving_off
+5 मिनट का टाइमर लगाओ,timer
+wifi connected hai kya,device_info
+play a funny video,youtube
+please volume up na,volume
+kori mai gaadi chala raha hu na,driving_on
+zara play arijit singh songs on youtube na,youtube
+स्पॉटिफाई open karo,open_app
+स्पॉटिफाई khol do,open_app
+hey kori बैटरी कितनी बची है jaldi,device_info
+zara ମାଙ୍କୁ କଲ୍ କର,call
+अमेज़न पर जूते ढूंढो,shop
+kori chup raho,stop_assistant
+hey kori बस रुको,stop_assistant
+mujhe 10 baje utha dena,alarm
+gmail open karo,open_app
+kori good evening jaldi,chat
+kori mummy ko whatsapp karo ki main aa raha hoon ji,message
+papa ko call lagao ji,call
+shaam 12 baje alarm lagana,alarm
+open सेटिंग,open_app
+timer lagao 15 minute,timer
+ୟୁଟ୍ୟୁବ୍ khol do,open_app
+hey kori send a message to rahul saying i am late please,message
+stop listening,stop_assistant
+call home jaldi,call
+hey kori torch band karo,flashlight
+kori hi kori,chat
+please ଆଗକୁ ଗୀତ please,music
+please turn the volume down,volume
+please 10 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+please sleep mode na,stop_assistant
+kori band karo please,stop_assistant
+please cricket match kaun jeeta na,question
+subah 8 baje ka alarm lagao,alarm
+5 मिनट बाद बताना,timer
+ek timer 10 minute ka lagao,timer
+hey kori yeh kya cheez hai na,camera_identify
+गैलरी ଖୋଲ,open_app
+phonepe ଖୋଲ,open_app
+subah 9 baje ka alarm lagao,alarm
+zara ଚୁପ୍ ହୁଅ,stop_assistant
+whatsapp kholo,open_app
+spotify ଖୋଲ,open_app
+wake me up at 7:30,alarm
+start gallery,open_app
+hey kori whatsapp mom that i am coming ji,message
+ଟର୍ଚ୍ଚ ଜଳାଅ,flashlight
+please wifi connected hai kya,device_info
+kori is the internet working jaldi,device_info
+kori who won the match yesterday please,question
+kori सुनना बंद करो,stop_assistant
+please what is this object in my hand na,camera_identify
+previous song na,music
+wake me up at 10:30,alarm
+start फेसबुक,open_app
+ଟାଇମର୍ 25 ମିନିଟ୍ ସେଟ୍ କର,timer
+zara ମୁଁ ଗାଡି ଚଳାଉଛି ji,driving_on
+zara राहुल को कॉल करो jaldi,call
+call rahul ji,call
+gallery khol do,open_app
+ଶୁଣିବା ବନ୍ଦ କର,stop_assistant
+alarm at 12 pm,alarm
+45 minute ka timer set karo,timer
+zara पिछला गाना jaldi,music
+kori flashlight chalu karo ji,flashlight
+please मैं 30 मिनट के लिए बिजी हूं please,away_on
+बस करो,stop_assistant
+please ଶୋଇପଡ଼ ji,stop_assistant
+hey kori मैं 5 मिनट के लिए बिजी हूं please,away_on
+ଆମାଜନ୍ ରେ ଜୋତା ଖୋଜ jaldi,shop
+thank you,chat
+battery kitna bacha hai,device_info
+please भाई को फोन करो please,call
+भारत के प्रधानमंत्री कौन हैं,question
+zara ଏହା କଣ ଅଟେ please,camera_identify
+start व्हाट्सएप,open_app
+गैलरी kholo,open_app
+hey kori how does photosynthesis work ji,question
+टॉर्च बंद करो,flashlight
+zara call rahul,call
+ड्राइविंग मोड ऑफ करो,driving_off
+zara mummy ko call lagao,call
+zara shukriya,chat
+zara play music,music
+open जीमेल,open_app
+5 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+ମୁଁ ଫେରିଆସିଲି,away_off
+hey kori ଗୀତ ବନ୍ଦ କର,music
+timer for 25 minutes please,timer
+ମୁଁ ପହଞ୍ଚି ଗଲି,driving_off
+hey kori ପରବର୍ତ୍ତୀ ଗୀତ ଚଳାଅ,music
+timer lagao 30 minute,timer
+3 minute ka timer set karo,timer
+please open इंस्टाग्राम for me,open_app
+please open snapchat for me,open_app
+kori main pahunch gaya jaldi,driving_off
+please ଭାଇକୁ ମେସେଜ୍ ପଠାଅ please,message
+kori मैं 15 मिनट के लिए बिजी हूं jaldi,away_on
+increase the volume,volume
+ଇନଷ୍ଟାଗ୍ରାମ୍ खोलो,open_app
+मैं वापस आ गया na,away_off
+play arijit singh songs on youtube jaldi,youtube
+kori previous song na,music
+please शुक्रिया jaldi,chat
+ring amit please,call
+सुबह 5 बजे का अलार्म लगाओ,alarm
+zara main 10 minute ke liye busy hoon please,away_on
+instagram khol do,open_app
+यूट्यूब ଖୋଲ,open_app
+start camera,open_app
+hey kori phone mom jaldi,call
+ୟୁଟ୍ୟୁବ୍ ଖୋଲ,open_app
+mute the phone,volume
+please रुक जाओ ji,stop_assistant
+drive mode chalu karo jaldi,driving_on
+सेटिंग ଖୋଲ,open_app
+କ୍ରୋମ୍ khol do,open_app
+main ghar pahunch gaya,driving_off
+ଟାଇମର୍ 12 ମିନିଟ୍ ସେଟ୍ କର,timer
+zara flashlight on,flashlight
+what is the weather in bhubaneswar,question
+launch व्हाट्सएप,open_app
+kori ruk jao please,stop_assistant
+battery percentage na,device_info
+zara play a funny video,youtube
+zara torch jalao please,flashlight
+volume badhao,volume
+hey kori गाना रोको,music
+15 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+zara gaana band karo,music
+zara switch off the torch,flashlight
+countdown 5 minutes,timer
+kori dhanyavaad ji,chat
+आवाज़ कम करो,volume
+फेसबुक खोलो,open_app
+please bhai ko phone karo,call
+battery status,device_info
+बस रुको,stop_assistant
+facebook खोलो,open_app
+rahul ko call karo,call
+mujhe 8 baje utha dena,alarm
+open କ୍ୟାମେରା,open_app
+kal ka mausam kaisa rahega jaldi,question
+hey kori ଥମିଯାଅ jaldi,stop_assistant
+क्या हाल है,chat
+cricket match kaun jeeta,question
+इंस्टाग्राम खोलो,open_app
+कैलकुलेटर open karo,open_app
+11 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+open facebook,open_app
+kori बस रुको na,stop_assistant
+ये क्या है jaldi,camera_identify
+please open chrome for me,open_app
+ମୁଁ ଫେରିଆସିଲି please,away_off
+hey kori what is the weather in bhubaneswar please,question
+hey kori how are you please,chat
+gaana band karo,music
+wake me up at 11:30,alarm
+zara आवाज़ कम करो jaldi,volume
+hey kori ଟର୍ଚ୍ଚ ଜଳାଅ na,flashlight
+identify this,camera_identify
+subah 10 baje ka alarm lagao,alarm
+pause the music please,music
+launch maps,open_app
+open youtube,open_app
+मैं 5 मिनट के लिए बिजी हूं,away_on
+telegram kholo,open_app
+kori drive mode chalu karo jaldi,driving_on
+settings khol do,open_app
+टाइमर सेट करो 7 मिनट के लिए,timer
+please खोजो सबसे अच्छा फोन na,web_search
+open गैलरी,open_app
+मैं ड्राइव कर रहा हूं,driving_on
+इसका नाम क्या है,camera_identify
+मैप्स open karo,open_app
+zara papa ko sms bhejo na,message
+flashlight off ji,flashlight
+hey kori hello jaldi,chat
+मम्मी को फोन लगाओ na,call
+hey kori play lofi music on youtube please,youtube
+please open ୟୁଟ୍ୟୁବ୍ for me,open_app
+countdown 25 minutes,timer
+start spotify,open_app
+ड्राइविंग मोड बंद करो,driving_off
+awaaz tez karo,volume
+hey kori बंद करो ji,stop_assistant
+hey kori who wrote the ramayana jaldi,question
+subah 11 baje ka alarm lagao,alarm
+hey kori awaaz badhao na,volume
+open कैमरा,open_app
+इसे पहचानो,camera_identify
+main 15 minute ke liye busy hoon,away_on
+zara टॉर्च बंद करो ji,flashlight
+ଟାଇମର୍ 45 ମିନିଟ୍ ସେଟ୍ କର,timer
+hey kori main free hoon ab na,away_off
+start a 7 minute timer,timer
+kori make a call to the doctor jaldi,call
+zara तुम कौन हो ji,chat
+तुम कौन हो na,chat
+mute,volume
+who are you,chat
+kori mujhe 30 minute disturb mat karna,away_on
+alarm set karo 5 baje,alarm
+open spotify,open_app
+गाना बंद करो,music
+remind me in 12 minutes,timer
+start instagram,open_app
+zara lower the volume jaldi,volume
+3 मिनट बाद बताना,timer
+please papa ko call lagao please,call
+phone ko chup kara do,volume
+launch କ୍ୟାମେରା,open_app
+ଆଜି ପାଗ କେମିତି ଅଛି please,question
+start youtube,open_app
+ନମସ୍କାର,chat
+please आवाज़ बढ़ाओ ji,volume
+kaise ho,chat
+12 बजे उठा देना,alarm
+make a call to the doctor,call
+kori namaste ji,chat
+hey kori main drive kar raha hoon na,driving_on
+i am driving,driving_on
+kori mute,volume
+9 बजे उठा देना,alarm
+kori चुप हो जाओ please,stop_assistant
+please switch on the flashlight jaldi,flashlight
+away mode on for 5 minutes please,away_on
+kori ମୁଁ ପହଞ୍ଚିଗଲି jaldi,driving_off
+telegram ଖୋଲ,open_app
+please order a phone cover jaldi,shop
+launch इंस्टाग्राम,open_app
+2 मिनट बाद बताना,timer
+what am i looking at,camera_identify
+kori flipkart par mobile dikhao ji,shop
+kori mummy ko call lagao,call
+start a 25 minute timer,timer
+please वॉल्यूम बढ़ाओ jaldi,volume
+hey kori band karo jaldi,stop_assistant
+zara गाना चलाओ ji,music
+इंटरनेट पर खोजो ji,web_search
+15 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+please mujhe ek mazedaar baat batao na,chat
+hey kori tell me what this is ji,camera_identify
+25 मिनट का टाइमर लगाओ,timer
+go to sleep,stop_assistant
+launch कैलकुलेटर,open_app
+12 मिनट का टाइमर लगाओ,timer
+open यूट्यूब,open_app
+spotify kholo,open_app
+कैमरा kholo,open_app
+good morning,chat
+how much battery is left,device_info
+torch on karo ji,flashlight
+whatsapp open karo,open_app
+मम्मी को फोन लगाओ,call
+please gaana band karo please,music
+please ଡ୍ରାଇଭିଂ ମୋଡ୍ ବନ୍ଦ କର please,driving_off
+set alarm for 7:15 in the morning,alarm
+kori stop listening,stop_assistant
+please open camera for me,open_app
+please ଏହାକୁ ଚିହ୍ନାଅ ji,camera_identify
+zara google karo jaldi,web_search
+कैलकुलेटर kholo,open_app
+subah 7 baje ka alarm lagao,alarm
+set an alarm for 12 am,alarm
+play lofi music on youtube,youtube
+kori मैं टॉयलेट जा रहा हूं,game_break
+zara i am busy for 10 minutes ji,away_on
+ek timer 30 minute ka lagao,timer
+zara ଭଲ୍ୟୁମ୍ ବଢ଼ାଅ na,volume
+ଫ୍ଲାଶଲାଇଟ୍ ଚାଲୁ କର na,flashlight
+please kaise ho na,chat
+hi kori,chat
+please ड्राइविंग मोड ऑन jaldi,driving_on
+timer for 12 minutes please,timer
+20 minute ka timer set karo,timer
+set a timer for 10 minutes,timer
+subah 6 baje ka alarm lagao,alarm
+कैसे हो,chat
+hey kori मम्मी को व्हाट्सएप करो jaldi,message
+इंस्टाग्राम khol do,open_app
+i am busy for 15 minutes,away_on
+12 minute baad yaad dilana,timer
+hey kori ଡ୍ରାଇଭିଂ ମୋଡ୍ ବନ୍ଦ କର ji,driving_off
+flashlight band karo,flashlight
+zara kya haal hai jaldi,chat
+main 5 minute ke liye busy hoon na,away_on
+kori flashlight band karo jaldi,flashlight
+alarm set karo 8 baje,alarm
+mummy ko call lagao,call
+hey kori google karo best laptop jaldi,web_search
+maps kholo,open_app
+क्रोम open karo,open_app
+driving mode on na,driving_on
+please youtube pe song chalao please,youtube
+please म्यूट करो na,volume
+i am driving ji,driving_on
+ଇନଷ୍ଟାଗ୍ରାମ୍ open karo,open_app
+10 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+7 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+set a timer for 7 minutes,timer
+kori away mode on for 15 minutes please,away_on
+ପରବର୍ତ୍ତୀ ଗୀତ ଚଳାଅ please,music
+gmail खोलो,open_app
+away mode off,away_off
+10 minute ka timer set karo,timer
+i am busy for 10 minutes na,away_on
+paytm खोलो,open_app
+गाना चलाओ,music
+set an alarm for 6 am,alarm
+kori increase the volume please,volume
+please i am going to the toilet na,game_break
+tell me a joke,chat
+ସକାଳ 9 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+namaste,chat
+kori play music jaldi,music
+15 minute baad yaad dilana,timer
+please ୟୁଟ୍ୟୁବ୍ ରେ ଗୀତ ଚଳାଅ,youtube
+skip this song,music
+kori गाना बंद करो,music
+ଖୋଜ ସର୍ବୋତ୍ତମ ଫୋନ୍,web_search
+how does photosynthesis work,question
+kori ଏହାକୁ ଚିହ୍ନାଅ ji,camera_identify
+kori i am not driving jaldi,driving_off
+kori flipkart par mobile dikhao,shop
+facebook ଖୋଲ,open_app
+zara tell me your abilities please,chat
+open whatsapp,open_app
+सुबह 7 बजे का अलार्म लगाओ,alarm
+ହ୍ୱାଟସଆପ୍ khol do,open_app
+call the plumber please,call
+please open व्हाट्सएप for me,open_app
+इंस्टाग्राम ଖୋଲ,open_app
+hey kori ମୁଁ ପହଞ୍ଚିଗଲି please,driving_off
+kori pichla gaana please,music
+hey kori search headphones on flipkart please,shop
+isse pehchano,camera_identify
+please ଗୀତ ଚଳାଅ,music
+please open कैलकुलेटर for me,open_app
+please ଗୀତ ଚଳାଅ na,music
+kori driving mode off,driving_off
+यूट्यूब पर गाना चलाओ,youtube
+camera ଖୋଲ,open_app
+start a 30 minute timer,timer
+चुप हो जाओ,stop_assistant
+zara wifi connected hai kya na,device_info
+6 ଟାରେ ମୋତେ ଉଠାଅ,alarm
+hey kori बैटरी कितनी बची है na,device_info
+please ଫ୍ଲାଶଲାଇଟ୍ ବନ୍ଦ କର na,flashlight
+amit ko bolo ki kal milte hain,message
+please सो जाओ please,stop_assistant
+मैं पहुंच गया jaldi,driving_off
+calculator ଖୋଲ,open_app
+please open ଇନଷ୍ଟାଗ୍ରାମ୍ for me,open_app
+hey kori dhanyavaad,chat
+mute the phone na,volume
+search cooking videos on youtube,youtube
+cricket match kaun jeeta na,question
+ek timer 25 minute ka lagao,timer
+hey kori i am busy for 15 minutes na,away_on
+hey kori ଇଣ୍ଟରନେଟ୍ ରେ ଖୋଜ please,web_search
+kori arijit ke gaane youtube par chalao ji,youtube
+please send a message to rahul saying i am late,message
+please mummy ko phone lagao please,call
+इंस्टाग्राम open karo,open_app
+whatsapp mom that i am coming,message
+zara वॉल्यूम बढ़ाओ ji,volume
+hey kori tell me what this is please,camera_identify
+hey kori बैटरी कितनी है jaldi,device_info
+shaam 6 baje alarm lagana,alarm
+hey kori battery kitna bacha hai,device_info
+मैं वापस आ गया,away_off
+kori play the next track please,music
+please यूट्यूब पर गाना चलाओ,youtube
+what am i looking at please,camera_identify
+launch सेटिंग,open_app
+ଶୁଭ ସକାଳ jaldi,chat
+please mai gaadi chala raha hu please,driving_on
+awaaz kam karo,volume
+facebook open karo,open_app
+start a 15 minute timer,timer
+hey kori youtube pe song chalao please,youtube
+please मैं पहुंच गया na,driving_off
+ଗୀତ ବନ୍ଦ କର,music
+search best restaurants,web_search
+मैप्स ଖୋଲ,open_app
+maps खोलो,open_app
+ye kaun sa phool hai,camera_identify
+remind me in 2 minutes,timer
+ଓଡ଼ିଶାର ରାଜଧାନୀ କଣ na,question
+जीमेल kholo,open_app
+hey kori टॉर्च जलाओ please,flashlight
+launch कैमरा,open_app
+kori mujhe 10 minute disturb mat karna jaldi,away_on
+zara सुप्रभात ji,chat
+भारत के प्रधानमंत्री कौन हैं ji,question
+call rahul,call
+mujhe ek mazedaar baat batao,chat
+please open gallery for me,open_app
+call the plumber,call
+please gaadi rok di hai ji,driving_off
+launch phonepe,open_app
+please main 10 minute ke liye busy hoon na,away_on
+go back to the previous song,music
+zara ଶୋଇପଡ଼ na,stop_assistant
+please text papa that i reached ji,message
+kori i am busy for 15 minutes ji,away_on
+ମୁଁ ପହଞ୍ଚିଗଲି,driving_off
+please away mode on for 10 minutes jaldi,away_on
+you are great ji,chat
+kori chup ho jao please,stop_assistant
+zara 30 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ,away_on
+hey kori main ghar pahunch gaya ji,driving_off
+gmail khol do,open_app
+फेसबुक kholo,open_app
+main 5 minute ke liye busy hoon,away_on
+please driving mode on jaldi,driving_on
+zara राहुल को कॉल करो na,call
+settings ଖୋଲ,open_app
+hey kori फ्लैशलाइट चालू करो jaldi,flashlight
+kori internet par search karo recipes jaldi,web_search
+राहुल को मैसेज भेजो कि मैं लेट हूं,message
+hey kori mute kar do ji,volume
+ye kya fal hai,camera_identify
+zara मैं वापस आ गया please,away_off
+internet chal raha hai kya,device_info
+hey kori that's all thanks stop please,stop_assistant
+bharat ki rajdhani kya hai,question
+shaam 11 baje alarm lagana,alarm
+hey kori मैं ड्राइव कर रहा हूं please,driving_on
+इंटरनेट चल रहा है क्या,device_info
+aaj barish hogi kya na,question
+kori volume down please na,volume
+please flashlight off ji,flashlight
+reply to the last message please,message
+ड्राइविंग मोड चालू करो ji,driving_on
+सोने का भाव क्या है,question
+paytm ଖୋଲ,open_app
+टाइमर सेट करो 25 मिनट के लिए,timer
+zara main 15 minute ke liye busy hoon,away_on
+please ଭଲ୍ୟୁମ୍ ବଢ଼ାଅ please,volume
+बैटरी कितनी बची है,device_info
+kori main 10 minute ke liye busy hoon,away_on
+hey kori send sms to amit hello na,message
+please open phonepe for me,open_app
+phonepe खोलो,open_app
+call my brother,call
+5 बजे उठा देना,alarm
+kori main 30 minute ke liye busy hoon ji,away_on
+zara ଆଜି ପାଗ କେମିତି ଅଛି jaldi,question
+hey kori chup ho jao ji,stop_assistant
+start a 5 minute timer,timer
+25 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+3 मिनट का टाइमर लगाओ,timer
+10 मिनट का टाइमर लगाओ,timer
+kori शुक्रिया jaldi,chat
+20 मिनट का टाइमर लगाओ,timer
+calculator खोलो,open_app
+kori explain quantum computing simply na,question
+ଫ୍ଲାଶଲାଇଟ୍ ବନ୍ଦ କର please,flashlight
+zara stop the music ji,music
+please shukriya,chat
+zara isse pehchano,camera_identify
+hey kori main free hoon ab jaldi,away_off
+फेसबुक khol do,open_app
+alarm set karo 6 baje,alarm
+hey kori ବାପାଙ୍କୁ ଫୋନ୍ କର please,call
+please rahul ko message bhejo ki main late hoon jaldi,message
+वॉल्यूम बढ़ाओ,volume
+kori good morning please,chat
+kori good night kori please,chat
+please make a call to the doctor jaldi,call
+kori google the nearest hospital,web_search
+क्रिकेट मैच कौन जीता,question
+countdown 20 minutes,timer
+व्हाट्सएप open karo,open_app
+zara dial papa please,call
+kori papa ko sms bhejo jaldi,message
+kori टॉर्च जलाओ please,flashlight
+open gallery,open_app
+main gaadi chala raha hoon na,driving_on
+zara କେମିତି ଅଛ na,chat
+सेटिंग khol do,open_app
+timer lagao 5 minute,timer
+kori ye kaun sa jaanwar hai na,camera_identify
+switch off the torch,flashlight
+set alarm for 12:15 in the morning,alarm
+କ୍ରୋମ୍ open karo,open_app
+set an alarm for 7 am,alarm
+subah 12 baje ka alarm lagao,alarm
+please how tall is mount everest please,question
+please भारत के प्रधानमंत्री कौन हैं,question
+ek timer 3 minute ka lagao,timer
+2 मिनट का टाइमर लगाओ,timer
+पापा को कॉल लगाओ,call
+remind me in 5 minutes,timer
+please ଶୁଭ ସକାଳ jaldi,chat
+gaana roko,music
+launch क्रोम,open_app
+please volume badhao,volume
+go to sleep please,stop_assistant
+hey kori call the plumber,call
+alarm at 9 pm,alarm
+please identify this,camera_identify
+ମୁଁ ଡ୍ରାଇଭ୍ କରୁଛି,driving_on
+zara arijit ke gaane youtube par chalao please,youtube
+volume kam karo please,volume
+अगला गाना,music
+hey kori what is the capital of france na,question
+away mode on for 5 minutes jaldi,away_on
+mujhe 5 minute disturb mat karna jaldi,away_on
+ବାପାଙ୍କୁ ମେସେଜ୍ କର,message
+zara kal ka mausam kaisa rahega please,question
+set a timer for 5 minutes,timer
+30 मिनट बाद बताना,timer
+kori flashlight band karo ji,flashlight
+flipkart par mobile dikhao,shop
+kori good morning,chat
+please ड्राइविंग मोड चालू करो jaldi,driving_on
+ଏହା କେଉଁ ଫୁଲ,camera_identify
+kori ଚୁପ୍ ରୁହ please,stop_assistant
+zara google the nearest hospital,web_search
+ସକାଳ 11 ଟାରେ ଆଲାର୍ମ ଲଗାଅ,alarm
+kori ଏହାର ନାମ କଣ jaldi,camera_identify
+kori call the plumber na,call
+kori ଆଗକୁ ଗୀତ na,music
+kori driving mode on ji,driving_on
+hey kori stop the music please,music
+ଟାଇମର୍ 20 ମିନିଟ୍ ସେଟ୍ କର,timer
+i am not driving please,driving_off
+zara stop please,stop_assistant
+please i am driving,driving_on
+good evening,chat
+ଟାଇମର୍ 5 ମିନିଟ୍ ସେଟ୍ କର,timer
+scan this object,camera_identify
+set a timer for 12 minutes,timer
+hey kori mummy ko call lagao na,call
+please open whatsapp for me,open_app
+टेलीग्राम khol do,open_app
+कैलकुलेटर khol do,open_app
+hey kori tum kaun ho,chat
+hey kori इसे पहचानो na,camera_identify
+start phonepe,open_app
+kori flipkart par mobile dikhao please,shop
+lower the volume,volume
+ye kya fal hai ji,camera_identify
+ଆଜିର ଖବର କୁହ,question
+ଟାଇମର୍ 3 ମିନିଟ୍ ସେଟ୍ କର,timer
+hey kori ଶୁଣିବା ବନ୍ଦ କର ji,stop_assistant
+set an alarm for 9 am,alarm
+please find hotels near me please,web_search
+खोजो सबसे अच्छा फोन,web_search
+ek timer 12 minute ka lagao,timer
+launch whatsapp,open_app
+please who is the prime minister of india please,question
+wake me up at 9:30,alarm
+यूट्यूब open karo,open_app
+search cooking videos on youtube ji,youtube
+i'm available now jaldi,away_off
+please ଟର୍ଚ୍ଚ ବନ୍ଦ କର ji,flashlight
+kori game break,game_break
+zara is it going to rain today,question
+टाइमर सेट करो 12 मिनट के लिए,timer
+start क्रोम,open_app
+alarm at 6 pm,alarm
+kori क्रिकेट मैच कौन जीता ji,question
+hey kori 5 ମିନିଟ୍ ପାଇଁ ମୁଁ ବ୍ୟସ୍ତ please,away_on
+zara ଆଜିର ଖବର କୁହ please,question
+zara thank you jaldi,chat
+please bharat ki rajdhani kya hai please,question
+hey kori main wapas aa gaya please,away_off
+pause the music,music
+kori away mode on for 30 minutes na,away_on
+tum kaun ho,chat
+kori मैं 15 मिनट के लिए बिजी हूं na,away_on
+zara ବ୍ୟାଟେରୀ କେତେ ଅଛି na,device_info
+hey kori go back to the previous song please,music
+kori अमेज़न पर जूते ढूंढो please,shop
+25 मिनट बाद बताना,timer
+ଚୁପ୍ ହୁଅ please,stop_assistant
+kori play a funny video ji,youtube
+please main 15 minute ke liye busy hoon jaldi,away_on
+zara volume kam karo,volume
+kori ye kya fal hai ji,camera_identify
+open ହ୍ୱାଟସଆପ୍,open_app
+15 मिनट बाद बताना,timer
+2 ମିନିଟ୍ ପାଇଁ ଟାଇମର୍ ଲଗାଅ,timer
+set alarm for 10:15 in the morning,alarm
+start टेलीग्राम,open_app
+ୟୁଟ୍ୟୁବ୍ ରେ ଗୀତ ଚଳାଅ,youtube
+remind me in 20 minutes,timer
