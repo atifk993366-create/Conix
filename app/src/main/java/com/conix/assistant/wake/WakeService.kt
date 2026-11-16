@@ -39,6 +39,7 @@ import com.conix.assistant.MainActivity
 import com.conix.assistant.core.CallNotes
 import com.conix.assistant.dialer.AwayWatch
 import com.conix.assistant.dialer.CallRegistry
+import com.conix.assistant.dialer.KoriInCallService
 import com.conix.assistant.core.KoriCore
 import com.conix.assistant.core.Notifs
 import com.conix.assistant.notif.KoriNotificationListener
@@ -81,6 +82,7 @@ class WakeService : Service() {
     private var awayRound = 0
     private var awayWho = ""
     private var awayNumber: String? = null
+    private var drivingCall = false
     private val awayLines = ArrayList<String>()
 
     private val I = RegexOption.IGNORE_CASE
@@ -278,13 +280,25 @@ class WakeService : Service() {
     private fun onRinging(num: String?) {
         if (num != null) ringNumber = num
         if (ringing) return
-        if (!awayActive() && !core.prefs.callAssist) return
+        if (!awayActive() && !core.prefs.driving && !core.prefs.callAssist) return
         ringing = true
         handler.postDelayed({ if (ringing) announceCall() }, 900)
     }
 
     private fun announceCall() {
-        if (awayActive()) { startAwayCall(); return }
+        val textMode = core.prefs.callReply == "text"
+        val paused = core.prefs.automationPaused
+        val driving = core.prefs.driving && !paused
+        if (driving || (awayActive() && !paused)) {
+            if (textMode) {
+                if (KoriInCallService.instance != null) return   // Kori Phone declines and texts the caller by itself
+                handler.postDelayed({ if (ringing) fallbackTextReply(driving) }, if (driving) 800L else core.prefs.awayDelaySec * 1000L)
+                return
+            }
+            if (driving) { startDrivingCall(); return }
+            handler.postDelayed({ if (ringing && awayActive()) startAwayCall() }, core.prefs.awayDelaySec * 1000L)
+            return
+        }
         val who = contactName(ringNumber) ?: ringNumber?.toList()?.joinToString(" ") ?: "an unknown number"
         busy = true
         stopListening()
@@ -309,6 +323,65 @@ class WakeService : Service() {
             }
             else -> handler.postDelayed({ startListening() }, 300)
         }
+    }
+
+    private fun awayMessage(): String {
+        if (core.prefs.awayText.isNotBlank()) return core.prefs.awayText
+        return "Hi, main Kori hoon, ${owner()} ka assistant. ${owner()} abhi available nahi hain. Apna naam aur kaaran SMS kar dein, wo jaldi reply karenge. Urgent ho to 2 minute mein dobara call karein."
+    }
+
+    private fun sendSmsTo(num: String, text: String) {
+        if (!granted(Manifest.permission.SEND_SMS)) return
+        try {
+            val sm = if (Build.VERSION.SDK_INT >= 31) getSystemService(SmsManager::class.java)
+            else @Suppress("DEPRECATION") SmsManager.getDefault()
+            sm.sendMultipartTextMessage(num, null, sm.divideMessage(text), null, null)
+        } catch (_: Exception) { }
+    }
+
+    /** Used when Kori is not the phone app: decline with the phone's call control and text the caller. */
+    private fun fallbackTextReply(driving: Boolean) {
+        if (!ringing) return
+        val who = contactName(ringNumber) ?: ringNumber ?: "unknown"
+        val num = ringNumber
+        core.callControl(false)
+        if (num != null) {
+            sendSmsTo(num, if (driving) core.prefs.drivingText else awayMessage())
+            AwayWatch.add(this, num, who)
+        }
+        val note = if (driving) "Called while you were driving. I texted them." else "Called while you were away. I texted them."
+        scope.launch {
+            CallNotes.add(core.secrets, who, note, "")
+            KoriBus.notesTick++
+            KoriBus.messages.add(ChatLine("conix", "Call note - $who: $note"))
+        }
+    }
+
+    // ---------- Driving mode, voice style (experimental: callers may hear nothing on some phones) ----------
+    private fun startDrivingCall() {
+        awayCall = true; drivingCall = true; callMode = false
+        awayLines.clear(); awayRound = 0
+        awayNumber = ringNumber
+        awayWho = contactName(ringNumber) ?: ringNumber ?: "an unknown number"
+        busy = true
+        stopListening()
+        val r = core.callControl(true)
+        if (!r.startsWith("Answering")) {
+            awayCall = false; drivingCall = false
+            KoriBus.messages.add(ChatLine("conix", "Driving mode could not answer the call: $r"))
+            resume(); return
+        }
+        handler.postDelayed({ drivingSpeak() }, 900)
+    }
+
+    private fun drivingSpeak() {
+        if (!awayCall) return
+        CallRegistry.routeSpeaker(true)
+        try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = true } catch (_: Exception) { }
+        boostVolume()
+        handler.postDelayed({
+            if (awayCall) say(core.prefs.drivingText, true) { endAway(true) }
+        }, 600)
     }
 
     // ---------- Away mode: answer, ask the reason, leave a note ----------
@@ -365,6 +438,8 @@ class WakeService : Service() {
     private fun endAway(hangUp: Boolean) {
         if (!awayCall) return
         awayCall = false
+        val driving = drivingCall
+        drivingCall = false
         stopListening()
         if (hangUp) core.callControl(false)
         try { getSystemService(AudioManager::class.java).isSpeakerphoneOn = false } catch (_: Exception) { }
@@ -375,11 +450,11 @@ class WakeService : Service() {
         val transcript = awayLines.joinToString(" / ")
         awayLines.clear()
         scope.launch {
-            val note = if (transcript.isBlank()) "Called, but I couldn't hear a message." else core.summarizeCall(who, transcript)
+            val note = if (driving) "Called while you were driving." else if (transcript.isBlank()) "Called, but I couldn't hear a message." else core.summarizeCall(who, transcript)
             CallNotes.add(core.secrets, who, note, transcript)
             KoriBus.notesTick++
             KoriBus.messages.add(ChatLine("conix", "Call note - $who: $note"))
-            if (transcript.isBlank() && num != null && core.prefs.awaySms) sendAwaySms(num, who)
+            if (!driving && transcript.isBlank() && num != null && core.prefs.awaySms) sendAwaySms(num, who)
         }
         busy = false
         handler.postDelayed({ resume() }, 1200)
